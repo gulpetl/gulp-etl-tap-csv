@@ -8,6 +8,11 @@ import * as loglevel from 'loglevel'
 const log = loglevel.getLogger(PLUGIN_NAME) // get a logger instance based on the project name
 log.setLevel((process.env.DEBUG_LEVEL || 'warn') as log.LogLevelDesc)
 
+// const parse = require('csv-parse')
+  //const parser = parse({ quote: '"', ltrim: true, rtrim: true, delimiter: ',' })
+
+const csvtojson=require("csvtojson");
+
 export type TransformCallback = (lineObj: object) => object | null
 export type FinishCallback = () => void
 export type StartCallback = () => void
@@ -46,14 +51,18 @@ export function handlelines(configObj: any, newHandlers?: allCallbacks) {
   transformer._transform = function (dataLine: string, encoding: string, callback: Function) {
     let returnErr: any = null
     try {
-      let dataObj
-      if (dataLine.trim() != "") dataObj = JSON.parse(dataLine)
-      let handledObj = handleLine(dataObj)
-      if (handledObj) {
-        let handledLine = JSON.stringify(handledObj)
-        log.debug(handledLine)
-        this.push(handledLine + '\n');
-      }
+      
+      log.debug(dataLine.toString())
+      this.push(dataLine.toString());
+
+      // let dataObj
+      // if (dataLine.trim() != "") dataObj = JSON.parse(dataLine)
+      // let handledObj = handleLine(dataObj)
+      // if (handledObj) {
+      //   let handledLine = JSON.stringify(handledObj)
+      //   log.debug(handledLine)
+      //   this.push(handledLine + '\n');
+      // }
     } catch (err) {
       returnErr = new PluginError(PLUGIN_NAME, err);
     }
@@ -101,24 +110,40 @@ export function handlelines(configObj: any, newHandlers?: allCallbacks) {
     }
     else if (file.isStream()) {
       file.contents = file.contents
-        // split plugin will split the file into lines
-        .pipe(split())
-        .pipe(transformer)
-        .on('finish', function () {
-          // using finish event here instead of end since this is a Transform stream   https://nodejs.org/api/stream.html#stream_events_finish_and_end
-          //the 'finish' event is emitted after stream.end() is called and all chunks have been processed by stream._transform()
-          //this is when we want to pass the file along
-          log.debug('finished')
-          finishHandler();
-          self.push(file);
-          cb(returnErr);
-        })
-        .on('error', function (err: any) {
-          log.error(err)
-          cb(new PluginError(PLUGIN_NAME, err))
-        })
+      //   // split plugin will split the file into lines
+      //   //.pipe(split())
+        // .pipe(transformer)
+      //   //.pipe(require('ldjson-stream').serialize())
+      //   // .pipe(parser)
+        .pipe(csvtojson())
+
+      .on('done', function (error:any) {
+        // self.push(file);
+        // cb(returnErr);
+        finishHandler();
+        log.debug('done')
+      })
+//               .on('finish', function () {
+//           // using finish event here instead of end since this is a Transform stream   https://nodejs.org/api/stream.html#stream_events_finish_and_end
+//           //the 'finish' event is emitted after stream.end() is called and all chunks have been processed by stream._transform()
+//           //this is when we want to pass the file along
+//           log.debug('finished')
+//           finishHandler();
+//           // self.push(file);
+//           // cb(returnErr);
+// cb(returnErr, file);
+          
+//         })
+//         .on('data', function (err: any) {
+//           log.debug(err)
+//         })
+//         .on('error', function (err: any) {
+//           log.error(err)
+//           cb(new PluginError(PLUGIN_NAME, err))
+//         })
     }
 
+    cb(returnErr, file);
   })
 
   startHandler();

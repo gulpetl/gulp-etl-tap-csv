@@ -5,6 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "csvtojsontest",
+            "type": "node",
+            "request": "launch",
+            "args": ["src/csvtojsontest.ts", "--config", "tap-config.json"],
+            "runtimeArgs": ["-r", "ts-node/register"],
+            "cwd": "${workspaceRoot}",
+            "protocol": "inspector",
+            "internalConsoleOptions": "openOnSessionStart",
+            "console": "integratedTerminal",
+        },
+        {
             "name": "GulpTester",
             "type": "node",
             "request": "launch",
@@ -17,7 +28,22 @@
             ],
             "console": "internalConsole",
             "env": {"DEBUG_LEVEL":"info"}
-        },{        
+        },
+        {
+            "name": "Simple Gulpfile",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/gulp/bin/gulp.js",
+            "stopOnEntry": false,
+            "args": ["--gulpfile", "./debug/gulpfile.ts", "simple"],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy", "-r", "ts-node/register"
+            ],
+            "console": "internalConsole",
+            "env": {"DEBUG_LEVEL":"info"}
+        },
+        {        
             "name": "GulpTester Debug",
             "type": "node",
             "request": "launch",
