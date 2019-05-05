@@ -1,6 +1,5 @@
 let gulp = require('gulp')
-import {handlelines} from '../src/plugin'
-export { handlelines, TransformCallback } from '../src/plugin';
+import {tapCsv} from '../src/plugin'
 
 import {gulpPrefixer} from '../src/simpleplugin'
 
@@ -22,23 +21,6 @@ const PLUGIN_NAME = module.exports.name;
 //pluginLog.setLevel('debug')
 
 
-// allCaps makes sure all string properties on the top level of lineObj have values that are all caps
-const allCaps = (lineObj: object): object => {
-  log.debug(lineObj)
-  for (let propName in lineObj) {
-    let obj = (<any>lineObj)
-    if (typeof (obj[propName]) == "string")
-      obj[propName] = obj[propName].toUpperCase()
-  }
-  
-  // for testing: cause an error
-  // let err; 
-  // let zz = (err as any).nothing;
-
-  return lineObj
-}
-
-
 function demonstrateHandlelines(callback: any) {
   log.info('gulp starting for ' + PLUGIN_NAME)
   return gulp.src('../testdata/*.csv',{buffer:false})
@@ -46,10 +28,7 @@ function demonstrateHandlelines(callback: any) {
         log.error('whoops: ' + err)
         callback(err)
       }))
-      // call allCaps function above for each line
-      // .pipe(handlelines({}, { transformCallback: allCaps }))
-      // call the built-in handleline callback (by passing no callbacks to override the built-in default), which adds an extra param
-      .pipe(handlelines({}))
+      .pipe(tapCsv({columns:true}))
       .pipe(rename({
         extname: ".ndjson",
       }))      
@@ -100,26 +79,37 @@ function demonstrateHandlelines(callback: any) {
 
 
 
-    function test2(callback: any) {
+    export function csvParseTest(callback: any) {
 
     const parse = require('csv-parse')
     const generate = require('csv-generate')
     const transform = require('stream-transform')
     
-    const generator = generate({
-      length: 20
-    })
-    const parser = parse({
-      delimiter: ':'
-    })
-    const transformer = transform(function(record:any, callback:any){
-      setTimeout(function(){
-        callback(null, record.join(' ')+'\n')
-      }, 500)
-    }, {
-      parallel: 5
-    })
-    generator.pipe(parser).pipe(transformer).pipe(process.stdout)
+    // const generator = generate({
+    //   length: 20
+    // })
+    // const parser = parse({
+    //   delimiter: ','
+    // })
+    // const transformer = transform(function(record:any, callback:any){
+    //   setTimeout(function(){
+    //     callback(null, record.join(' ')+'\n')
+    //   }, 500)
+    // }, {
+    //   parallel: 5
+    // })
+    // // generator.pipe(parser).pipe(transformer).pipe(process.stdout)
+
+    // const readStream=require('fs').createReadStream('../testdata/cars.csv');
+    // readStream.pipe(parser).pipe(process.stdout)
+
+    var parser = parse({delimiter: ',', columns:true});
+    
+    require('fs').createReadStream('../testdata/cars.csv').pipe(parser)
+    .on("data",(data:any)=>{
+      console.log(data)
+    });
+    
   }
 
 exports.default = gulp.series(demonstrateHandlelines)

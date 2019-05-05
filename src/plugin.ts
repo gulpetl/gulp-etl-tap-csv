@@ -1,6 +1,5 @@
 const through2 = require('through2')
 import Vinyl = require('vinyl')
-const split = require('split2')
 import PluginError = require('plugin-error');
 const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
 const PLUGIN_NAME = module.exports.name;
@@ -8,61 +7,30 @@ import * as loglevel from 'loglevel'
 const log = loglevel.getLogger(PLUGIN_NAME) // get a logger instance based on the project name
 log.setLevel((process.env.DEBUG_LEVEL || 'warn') as log.LogLevelDesc)
 
-// const parse = require('csv-parse')
-  //const parser = parse({ quote: '"', ltrim: true, rtrim: true, delimiter: ',' })
+const parse = require('csv-parse')
 
-const csvtojson=require("csvtojson");
-
-export type TransformCallback = (lineObj: object) => object | null
-export type FinishCallback = () => void
-export type StartCallback = () => void
-export type allCallbacks = {
-  transformCallback?: TransformCallback,
-  finishCallback?: FinishCallback,
-  startCallback?: StartCallback
-}
-
-/* This is a model gulp-etl plugin. It is compliant with best practices for Gulp plugins (see
+/* This is a gulp-etl plugin. It is compliant with best practices for Gulp plugins (see
 https://github.com/gulpjs/gulp/blob/master/docs/writing-a-plugin/guidelines.md#what-does-a-good-plugin-look-like ),
-but with an additional feature: it accepts a configObj as its first parameter */
-export function handlelines(configObj: any, newHandlers?: allCallbacks) {
-  let propsToAdd = configObj.propsToAdd
+and like all gulp-etl plugins it accepts a configObj as its first parameter */
+export function tapCsv(configObj: any) {
 
-  // handleLine could be the only needed piece to be replaced for most gulp-etl plugins
-  const defaultHandleLine = (lineObj: object): object | null => {
-    for (let propName in propsToAdd) {
-      (lineObj as any)[propName] = propsToAdd[propName]
-    }
+  // post-process line object
+  const handleLine = (lineObj: object): object | null => {
+
     return lineObj
   }
-  const defaultFinishHandler = (): void => {
-    log.info("The handler has officially ended!");
-  }
-  const defaultStartHandler = () => {
-    log.info("The handler has officially started!");
-  }
-  const handleLine: TransformCallback = newHandlers && newHandlers.transformCallback ? newHandlers.transformCallback : defaultHandleLine;
-  const finishHandler: FinishCallback = newHandlers && newHandlers.finishCallback ? newHandlers.finishCallback : defaultFinishHandler;
-  let startHandler: StartCallback = newHandlers && newHandlers.startCallback ? newHandlers.startCallback : defaultStartHandler;
 
   let transformer = through2.obj(); // new transform stream, in object mode
-  // // since we're in object mode, dataLine comes as a string. Since we're counting on split
-  // // to have already been called upstream, dataLine will be a single line at a time
-  transformer._transform = function (dataLine: string, encoding: string, callback: Function) {
+  // transformer is designed to follow csv-parse, which emits objects, so dataObj is an Object. We will finish by converting dataObj to a text line
+  transformer._transform = function (dataObj: Object, encoding: string, callback: Function) {
     let returnErr: any = null
     try {
-      
-      log.debug(dataLine.toString())
-      this.push(dataLine.toString());
-
-      // let dataObj
-      // if (dataLine.trim() != "") dataObj = JSON.parse(dataLine)
-      // let handledObj = handleLine(dataObj)
-      // if (handledObj) {
-      //   let handledLine = JSON.stringify(handledObj)
-      //   log.debug(handledLine)
-      //   this.push(handledLine + '\n');
-      // }
+      let handledObj = handleLine(dataObj)
+      if (handledObj) {
+        let handledLine = JSON.stringify(handledObj)
+        log.debug(handledLine)
+        this.push(handledLine + '\n');
+      }
     } catch (err) {
       returnErr = new PluginError(PLUGIN_NAME, err);
     }
@@ -103,49 +71,35 @@ export function handlelines(configObj: any, newHandlers?: allCallbacks) {
       log.debug(data)
       file.contents = Buffer.from(data)
 
-      finishHandler();
+      // finishHandler();
 
       // send the transformed file through to the next gulp plugin, and tell the stream engine that we're done with this file
       cb(returnErr, file)
     }
     else if (file.isStream()) {
-      file.contents = file.contents
-      //   // split plugin will split the file into lines
-      //   //.pipe(split())
-        // .pipe(transformer)
-      //   //.pipe(require('ldjson-stream').serialize())
-      //   // .pipe(parser)
-        .pipe(csvtojson())
+      const parser = parse(configObj)
 
-      .on('done', function (error:any) {
-        // self.push(file);
-        // cb(returnErr);
-        finishHandler();
-        log.debug('done')
-      })
-//               .on('finish', function () {
-//           // using finish event here instead of end since this is a Transform stream   https://nodejs.org/api/stream.html#stream_events_finish_and_end
-//           //the 'finish' event is emitted after stream.end() is called and all chunks have been processed by stream._transform()
-//           //this is when we want to pass the file along
-//           log.debug('finished')
-//           finishHandler();
-//           // self.push(file);
-//           // cb(returnErr);
-// cb(returnErr, file);
-          
-//         })
-//         .on('data', function (err: any) {
-//           log.debug(err)
-//         })
-//         .on('error', function (err: any) {
-//           log.error(err)
-//           cb(new PluginError(PLUGIN_NAME, err))
-//         })
+      file.contents = file.contents
+        .pipe(parser)
+        .on('done', function (error:any) {
+          // self.push(file);
+          // cb(returnErr);
+          // finishHandler();
+          log.debug('done')
+        })
+        // .on('data', function (data:any, err: any) {
+        //   log.debug(data)
+        // })
+        .on('error', function (err: any) {
+          log.error(err)
+          cb(new PluginError(PLUGIN_NAME, err))
+        })
+        .pipe(transformer)
     }
 
     cb(returnErr, file);
   })
 
-  startHandler();
+  // startHandler();
   return strm
 }

@@ -30,7 +30,7 @@
             "env": {"DEBUG_LEVEL":"info"}
         },
         {
-            "name": "Simple Gulpfile",
+            "name": "Simple Gulpfile (csvtojson)",
             "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}/node_modules/gulp/bin/gulp.js",
@@ -56,7 +56,22 @@
             ],
             "console": "internalConsole",
             "env": {"DEBUG_LEVEL":"debug"}
-        },{
+        },
+        {
+            "name": "csvParseTest (csv-parse)",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/gulp/bin/gulp.js",
+            "stopOnEntry": false,
+            "args": ["--gulpfile", "./debug/gulpfile.ts", "csvParseTest"],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy", "-r", "ts-node/register"
+            ],
+            "console": "internalConsole",
+            "env": {"DEBUG_LEVEL":"info"}
+        },
+        {
             "name": "aws-doParse: debug TS w/o transpile using ts-node",
             "type": "node",
             "request": "launch",
