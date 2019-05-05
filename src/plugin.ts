@@ -9,14 +9,27 @@ log.setLevel((process.env.DEBUG_LEVEL || 'warn') as log.LogLevelDesc)
 
 const parse = require('csv-parse')
 
+function createRecord(recordObject:Object, streamName: string) : any {
+  return {type:"RECORD", stream:streamName, record:recordObject}
+}
+
 /* This is a gulp-etl plugin. It is compliant with best practices for Gulp plugins (see
 https://github.com/gulpjs/gulp/blob/master/docs/writing-a-plugin/guidelines.md#what-does-a-good-plugin-look-like ),
 and like all gulp-etl plugins it accepts a configObj as its first parameter */
 export function tapCsv(configObj: any) {
+  const parser = parse(configObj)
 
   // post-process line object
-  const handleLine = (lineObj: object): object | null => {
-
+  const handleLine = (lineObj: any): object | null => {
+    if (parser.options.raw || parser.options.info) {
+      let newObj = createRecord(lineObj.record, 'fromcsv') // TODO: where do we get the stream name?
+      if (lineObj.raw) newObj.raw = lineObj.raw
+      if (lineObj.info) newObj.info = lineObj.info
+      lineObj = newObj
+    }
+    else {
+      lineObj = createRecord(lineObj, 'fromcsv') // TODO: where do we get the stream name?
+    }
     return lineObj
   }
 
@@ -77,15 +90,16 @@ export function tapCsv(configObj: any) {
       cb(returnErr, file)
     }
     else if (file.isStream()) {
-      const parser = parse(configObj)
-
       file.contents = file.contents
         .pipe(parser)
         .on('done', function (error:any) {
-          // self.push(file);
-          // cb(returnErr);
-          // finishHandler();
-          log.debug('done')
+
+          // DON'T CALL THIS HERE. It MAY work, if the job is small enough. But it needs to be called after the stream is SET UP, not when the streaming is DONE.
+          // Calling the callback here instead of below will result in data hanging in the stream--not sure of the technical term, but dest() creates no file, or the file is blank
+          // cb(returnErr, file);
+          // log.debug('calling callback')    
+
+          log.debug(PLUGIN_NAME + ' is done')
         })
         // .on('data', function (data:any, err: any) {
         //   log.debug(data)
@@ -97,9 +111,11 @@ export function tapCsv(configObj: any) {
         .pipe(transformer)
     }
 
+
+    // after our stream is set up (not necesarily finished) we call the callback
+    log.debug('calling callback')    
     cb(returnErr, file);
   })
 
-  // startHandler();
   return strm
 }

@@ -1,83 +1,40 @@
 let gulp = require('gulp')
 import {tapCsv} from '../src/plugin'
 
-import {gulpPrefixer} from '../src/simpleplugin'
-
-
 import * as loglevel from 'loglevel'
 const log = loglevel.getLogger('gulpfile')
 log.setLevel((process.env.DEBUG_LEVEL || 'warn') as log.LogLevelDesc)
+// if needed, you can control the plugin's logging level separately from 'gulpfile' logging above
+// const pluginLog = loglevel.getLogger(PLUGIN_NAME)
+// pluginLog.setLevel('debug')
+
 import * as rename from 'gulp-rename'
 const errorHandler = require('gulp-error-handle'); // handle all errors in one handler, but still stop the stream if there are errors
-
-import * as vinylPaths from 'vinyl-paths';
-import * as del from 'del';
 
 const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
 const PLUGIN_NAME = module.exports.name;
 
-// control the plugin's logging level separately from this 'gulpfile' logging
-//const pluginLog = loglevel.getLogger(PLUGIN_NAME)
-//pluginLog.setLevel('debug')
 
 
-function demonstrateHandlelines(callback: any) {
+function runTapCsv(callback: any) {
   log.info('gulp starting for ' + PLUGIN_NAME)
   return gulp.src('../testdata/*.csv',{buffer:false})
-      .pipe(errorHandler(function(err:any) {
-        log.error('whoops: ' + err)
-        callback(err)
-      }))
-      .pipe(tapCsv({columns:true}))
-      .pipe(rename({
-        extname: ".ndjson",
-      }))      
-      .pipe(gulp.dest('../testdata/processed'))
-      // .pipe(vinylPaths((path) => {
-      //   // experimenting with deleting files, per https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md.
-      //   // This actually deletes the NEW files, not the originals! Try gulp-revert-path
-      //   return del(path, {force:true})
-      // }))
-      .on('end', function () {
-        log.info('end')
-        callback()
-      })
-    }
+    .pipe(errorHandler(function(err:any) {
+      log.error('Error: ' + err)
+      callback(err)
+    }))
+    .pipe(tapCsv({columns:true, raw:true}))
+    .pipe(rename({
+      extname: ".ndjson",
+    }))      
+    .pipe(gulp.dest('../testdata/processed'))
 
-
-
-    function test(callback: any) {
-      log.info('This seems to run only after a successful run of demonstrateHandlelines! Do deletions here?')
+    .on('end', function () {
+      log.info('end')
       callback()
-    }
+    })
 
-
-
-
-    export function simple(callback: any) {
-      log.info('gulp starting for ' + PLUGIN_NAME)
-      return gulp.src('../testdata/*.csv',{buffer:false})
-          .pipe(errorHandler(function(err:any) {
-            log.error('whoops: ' + err)
-            callback(err)
-          }))
-          .pipe(gulpPrefixer('test: '))
-          .pipe(rename({
-            suffix: "-fixed",
-          }))      
-          .pipe(gulp.dest('../testdata/processed'))
-          // .pipe(vinylPaths((path) => {
-          //   // experimenting with deleting files, per https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md.
-          //   // This actually deletes the NEW files, not the originals! Try gulp-revert-path
-          //   return del(path, {force:true})
-          // }))
-          .on('end', function () {
-            log.info('end')
-            callback()
-          })
-        }
-
-
+}
 
     export function csvParseTest(callback: any) {
 
@@ -112,6 +69,4 @@ function demonstrateHandlelines(callback: any) {
     
   }
 
-exports.default = gulp.series(demonstrateHandlelines)
-// exports.default = gulp.series(test2)
-// exports.default = gulp.series(simple)
+exports.default = gulp.series(runTapCsv)

@@ -34,14 +34,12 @@
     "@types/node": "^10.14.6",
     "@types/vinyl": "^2.0.3",
     "@types/vinyl-paths": "0.0.31",
-    "del": "^4.1.1",
     "gulp": "^4.0.1",
     "gulp-rename": "^1.4.0",
     "jest": "^24.7.1",
     "jest-spec-reporter": "^1.0.5",
     "ts-jest": "^24.0.2",
     "ts-node": "^7.0.1",
-    "typescript": "^3.4.5",
-    "vinyl-paths": "^2.1.0"
+    "typescript": "^3.4.5"
   }
 }
