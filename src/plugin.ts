@@ -94,7 +94,11 @@ export default function tapCsv(configObj: any) {
         }
         let data:string = resultArray.join('\n')
 
-        file.contents = Buffer.from(data)    
+        file.contents = Buffer.from(data)
+        
+        // we are done with file processing. Pass the processed file along
+        log.debug('calling callback')    
+        cb(returnErr, file);    
       })
 
     }
@@ -118,11 +122,12 @@ export default function tapCsv(configObj: any) {
           self.emit('error', new PluginError(PLUGIN_NAME, err));
         })
         .pipe(newTransformer(streamName))
+
+      // after our stream is set up (not necesarily finished) we call the callback
+      log.debug('calling callback')    
+      cb(returnErr, file);
     }
 
-    // after our stream is set up (not necesarily finished) we call the callback
-    log.debug('calling callback')    
-    cb(returnErr, file);
   })
 
   return strm
