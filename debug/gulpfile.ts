@@ -1,5 +1,5 @@
 let gulp = require('gulp')
-import {tapCsv} from '../src/plugin'
+import tapCsv from '../src/plugin'
 
 import * as loglevel from 'loglevel'
 const log = loglevel.getLogger('gulpfile')
@@ -14,23 +14,29 @@ const errorHandler = require('gulp-error-handle'); // handle all errors in one h
 const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
 const PLUGIN_NAME = module.exports.name;
 
-
+import Vinyl = require('vinyl') 
 
 function runTapCsv(callback: any) {
-  log.info('gulp starting for ' + PLUGIN_NAME)
+  log.info('gulp task starting for ' + PLUGIN_NAME)
+
   return gulp.src('../testdata/*.csv',{buffer:false})
     .pipe(errorHandler(function(err:any) {
       log.error('Error: ' + err)
       callback(err)
     }))
-    .pipe(tapCsv({columns:true, raw:true}))
+    .on('data', function (file:Vinyl) {
+      log.info('Starting processing on ' + file.basename)
+    })    
+    .pipe(tapCsv({columns:true /* ,raw:true, info:true */}))
     .pipe(rename({
       extname: ".ndjson",
     }))      
     .pipe(gulp.dest('../testdata/processed'))
-
+    .on('data', function (file:Vinyl) {
+      log.info('Finished processing on ' + file.basename)
+    })    
     .on('end', function () {
-      log.info('end')
+      log.info('gulp task complete')
       callback()
     })
 

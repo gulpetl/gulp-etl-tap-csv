@@ -1,7 +1,8 @@
 {
-  "name": "gulp-etl-handlelines",
+  "name": "gulp-etl-tap-csv",
   "version": "1.0.0",
-  "description": "Starter for gulp plugin",
+  "repository": "https://github.com/gulpetl/gulp-etl-tap-csv",
+  "description": "Convert CSV files to JSON compatible with gulp-etl",
   "main": "dist/js/plugin.js",
   "typings": "dist/types/plugin.d.ts",
   "files": [
