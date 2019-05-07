@@ -19,7 +19,7 @@ import Vinyl = require('vinyl')
 function runTapCsv(callback: any) {
   log.info('gulp task starting for ' + PLUGIN_NAME)
 
-  return gulp.src('../testdata/*.csv',{buffer:false})
+  return gulp.src('../testdata/*.csv',{buffer:true})
     .pipe(errorHandler(function(err:any) {
       log.error('Error: ' + err)
       callback(err)

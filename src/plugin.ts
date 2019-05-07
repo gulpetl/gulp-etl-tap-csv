@@ -72,43 +72,43 @@ export default function tapCsv(configObj: any) {
       return cb(returnErr, file)
     }
     else if (file.isBuffer()) {
-      // strArray will hold file.contents, split into lines
-      const strArray = (file.contents as Buffer).toString().split(/\r?\n/)
-      let tempLine: any
-      let resultArray = [];
-      // we'll call handleLine on each line
-      for (let dataIdx in strArray) {
-        try {
-          let lineObj;
-          if (strArray[dataIdx].trim() != "") lineObj = JSON.parse(strArray[dataIdx]);
-          tempLine = handleLine(lineObj, streamName)
-          if (tempLine){
-            resultArray.push(JSON.stringify(tempLine) + '\n');
+
+
+      parse(file.contents as Buffer, configObj, function(err:any, linesArray : []){
+        // this callback function runs when the parser finishes its work, returning an array parsed lines 
+        let tempLine: any
+        let resultArray = [];
+        // we'll call handleLine on each line
+        for (let dataIdx in linesArray) {
+          try {
+            let lineObj = linesArray[dataIdx]
+            tempLine = handleLine(lineObj, streamName)
+            if (tempLine){
+              let tempStr = JSON.stringify(tempLine)
+              log.debug(tempStr)
+              resultArray.push(tempStr);
+            }
+          } catch (err) {
+            returnErr = new PluginError(PLUGIN_NAME, err);
           }
-        } catch (err) {
-          returnErr = new PluginError(PLUGIN_NAME, err);
         }
-      }
-      let data:string = resultArray.join('')
-      log.debug(data)
-      file.contents = Buffer.from(data)
+        let data:string = resultArray.join('\n')
 
-      // finishHandler();
+        file.contents = Buffer.from(data)    
+      })
 
-      // send the transformed file through to the next gulp plugin, and tell the stream engine that we're done with this file
-      cb(returnErr, file)
     }
     else if (file.isStream()) {
       file.contents = file.contents
         .pipe(parser)
-        .on('done', function (error:any) {
+        .on('end', function () {
 
           // DON'T CALL THIS HERE. It MAY work, if the job is small enough. But it needs to be called after the stream is SET UP, not when the streaming is DONE.
-          // Calling the callback here instead of below will result in data hanging in the stream--not sure of the technical term, but dest() creates no file, or the file is blank
+          // Calling the callback here instead of below may result in data hanging in the stream--not sure of the technical term, but dest() creates no file, or the file is blank
           // cb(returnErr, file);
           // log.debug('calling callback')    
 
-          log.debug(PLUGIN_NAME + ' is done')
+          log.debug('csv parser is done')
         })
         // .on('data', function (data:any, err: any) {
         //   log.debug(data)

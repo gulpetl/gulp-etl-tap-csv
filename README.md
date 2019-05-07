@@ -28,13 +28,12 @@ exports.default = function() {
     .pipe(dest('output/'));
 }
 ```
-### Quick Start
+### Quick Start for Coding on This Plugin
 * Dependencies: 
     * [git](https://git-scm.com/downloads)
     * [nodejs](https://nodejs.org/en/download/releases/) - At least v6.3 (6.9 for Windows) required for TypeScript debugging
     * npm (installs with Node)
     * typescript - installed as a development dependency
-    * serverless - `npm install -g serverless` to install globally
 * Clone this repo and run `npm install` to install npm packages
 * Debug: with [VScode](https://code.visualstudio.com/download) use `Open Folder` to open the project folder, then hit F5 to debug. This runs without compiling to javascript using [ts-node](https://www.npmjs.com/package/ts-node)
 * Test: `npm test` or `npm t`
