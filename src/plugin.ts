@@ -18,6 +18,8 @@ function createRecord(recordObject:Object, streamName: string) : any {
 https://github.com/gulpjs/gulp/blob/master/docs/writing-a-plugin/guidelines.md#what-does-a-good-plugin-look-like ),
 and like all gulp-etl plugins it accepts a configObj as its first parameter */
 export default function tapCsv(configObj: any) {
+  if (!configObj) configObj = {}
+  if (!configObj.columns) configObj.columns = true // we don't allow false for columns; it results in arrays instead of objects for each record
 
   // creating a stream through which each file will pass - a new instance will be created and invoked for each file 
   // see https://stackoverflow.com/a/52432089/5578474 for a note on the "this" param

@@ -15,7 +15,8 @@ This is a **[gulp-etl](https://gulpetl.com/)** plugin, and as such it is a [gulp
 
 ### Usage
 **gulp-etl** plugins accept a configObj as the first parameter; the configObj
-will contain any info the plugin needs. For this plugin the configObj is the "Options" object for [csv-parse](https://csv.js.org/parse/), described [here](https://csv.js.org/parse/options/).
+will contain any info the plugin needs. For this plugin the configObj is the "Options" object for [csv-parse](https://csv.js.org/parse/), described [here](https://csv.js.org/parse/options/); the only difference is that the "columns" property cannot be falsey, since it would result in arrays being returned
+for each row instead of objects. A falsey value for columns will be overridden to true.
 
 ##### Sample gulpfile.js
 ```

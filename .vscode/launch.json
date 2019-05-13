@@ -5,37 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "csvtojsontest",
-            "type": "node",
-            "request": "launch",
-            "args": ["src/csvtojsontest.ts", "--config", "tap-config.json"],
-            "runtimeArgs": ["-r", "ts-node/register"],
-            "cwd": "${workspaceRoot}",
-            "protocol": "inspector",
-            "internalConsoleOptions": "openOnSessionStart",
-            "console": "integratedTerminal",
-        },
-        {
             "name": "GulpTester",
             "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}/node_modules/gulp/bin/gulp.js",
             "stopOnEntry": false,
             "args": ["--gulpfile", "./debug/gulpfile.ts", "default"],
-            "cwd": "${workspaceRoot}",
-            "runtimeArgs": [
-                "--nolazy", "-r", "ts-node/register"
-            ],
-            "console": "internalConsole",
-            "env": {"DEBUG_LEVEL":"info"}
-        },
-        {
-            "name": "Simple Gulpfile (csvtojson)",
-            "type": "node",
-            "request": "launch",
-            "program": "${workspaceRoot}/node_modules/gulp/bin/gulp.js",
-            "stopOnEntry": false,
-            "args": ["--gulpfile", "./debug/gulpfile.ts", "simple"],
             "cwd": "${workspaceRoot}",
             "runtimeArgs": [
                 "--nolazy", "-r", "ts-node/register"
@@ -57,13 +32,27 @@
             "console": "internalConsole",
             "env": {"DEBUG_LEVEL":"debug"}
         },
-        {
-            "name": "csvParseTest (csv-parse)",
+        {        
+            "name": "GulpTester Debug - Buffer Mode",
             "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}/node_modules/gulp/bin/gulp.js",
             "stopOnEntry": false,
-            "args": ["--gulpfile", "./debug/gulpfile.ts", "csvParseTest"],
+            "args": ["--gulpfile", "./debug/gulpfile.ts", "runTapCsvBuffer"],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy", "-r", "ts-node/register"
+            ],
+            "console": "internalConsole",
+            "env": {"DEBUG_LEVEL":"debug"}
+        },
+        {
+            "name": "csvParseWithoutGulp",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/gulp/bin/gulp.js",
+            "stopOnEntry": false,
+            "args": ["--gulpfile", "./debug/gulpfile.ts", "csvParseWithoutGulp"],
             "cwd": "${workspaceRoot}",
             "runtimeArgs": [
                 "--nolazy", "-r", "ts-node/register"

@@ -15,12 +15,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "csv": "^5.1.1",
-    "csvtojson": "^2.0.8",
+    "csv-parse": "^4.4.1",
     "from2": "^2.3.0",
-    "gulp-csvtojson": "^0.2.0",
     "gulp-error-handle": "^1.0.1",
-    "ldjson-stream": "^1.2.1",
     "loglevel": "^1.6.1",
     "pkginfo": "^0.4.1",
     "plugin-error": "^1.0.1",

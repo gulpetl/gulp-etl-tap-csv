@@ -16,10 +16,18 @@ const PLUGIN_NAME = module.exports.name;
 
 import Vinyl = require('vinyl') 
 
+let gulpBufferMode = false;
+
+function switchToBuffer(callback: any) {
+  gulpBufferMode = true;
+
+  callback();
+}
+
 function runTapCsv(callback: any) {
   log.info('gulp task starting for ' + PLUGIN_NAME)
 
-  return gulp.src('../testdata/*.csv',{buffer:false})
+  return gulp.src('../testdata/*.csv',{buffer:gulpBufferMode})
     .pipe(errorHandler(function(err:any) {
       log.error('Error: ' + err)
       callback(err)
@@ -27,7 +35,7 @@ function runTapCsv(callback: any) {
     .on('data', function (file:Vinyl) {
       log.info('Starting processing on ' + file.basename)
     })    
-    .pipe(tapCsv({columns:true /* ,raw:true, info:true */}))
+    .pipe(tapCsv({raw:true/*, info:true */}))
     .pipe(rename({
       extname: ".ndjson",
     }))      
@@ -42,37 +50,18 @@ function runTapCsv(callback: any) {
 
 }
 
-    export function csvParseTest(callback: any) {
+export function csvParseWithoutGulp(callback: any) {
 
-    const parse = require('csv-parse')
-    const generate = require('csv-generate')
-    const transform = require('stream-transform')
-    
-    // const generator = generate({
-    //   length: 20
-    // })
-    // const parser = parse({
-    //   delimiter: ','
-    // })
-    // const transformer = transform(function(record:any, callback:any){
-    //   setTimeout(function(){
-    //     callback(null, record.join(' ')+'\n')
-    //   }, 500)
-    // }, {
-    //   parallel: 5
-    // })
-    // // generator.pipe(parser).pipe(transformer).pipe(process.stdout)
+  const parse = require('csv-parse')
 
-    // const readStream=require('fs').createReadStream('../testdata/cars.csv');
-    // readStream.pipe(parser).pipe(process.stdout)
-
-    var parser = parse({delimiter: ',', columns:true});
-    
-    require('fs').createReadStream('../testdata/cars.csv').pipe(parser)
-    .on("data",(data:any)=>{
-      console.log(data)
-    });
-    
-  }
+  var parser = parse({delimiter: ',', columns:true});
+  
+  require('fs').createReadStream('../testdata/cars.csv').pipe(parser)
+  .on("data",(data:any)=>{
+    console.log(data)
+  });
+  
+}
 
 exports.default = gulp.series(runTapCsv)
+exports.runTapCsvBuffer = gulp.series(switchToBuffer, runTapCsv)
