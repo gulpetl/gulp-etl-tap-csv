@@ -20,7 +20,7 @@ for each row instead of objects. A falsey value for columns will be overridden t
 
 ##### Sample gulpfile.js
 ```
-var tapCsv = require('../src/plugin').tapCsv
+var tapCsv = require('gulp-etl-tap-csv').tapCsv
 
 exports.default = function() {
     return src('data/*.csv')
@@ -39,7 +39,6 @@ exports.default = function() {
 * Debug: with [VScode](https://code.visualstudio.com/download) use `Open Folder` to open the project folder, then hit F5 to debug. This runs without compiling to javascript using [ts-node](https://www.npmjs.com/package/ts-node)
 * Test: `npm test` or `npm t`
 * Compile to javascript: `npm run build-codeonly`
-* More options are included from [TypeScript Library Starter](https://github.com/alexjoverm/typescript-library-starter.git) and are documented [here](starter-README.md)
 
 ### Testing
 
