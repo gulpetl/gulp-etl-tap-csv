@@ -2,7 +2,7 @@
 
 This plugin  converts CSV files to **gulp-etl** **Message Stream** files; originally adapted from the [gulp-etl-handlelines](https://github.com/gulpetl/gulp-etl-handlelines) model plugin. It is a **gulp-etl** wrapper for [csv-parse](https://csv.js.org/parse/).
 
-This is a **[gulp-etl](https://gulpetl.com/)** plugin, and as such it is a [gulp](https://gulpjs.com/) plugin. **gulp-etl** plugins work with [ndjson](http://ndjson.org/) data streams/files which we call **Message Streams** and which are compliant with the [Singer specification](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#output). Message Streams look like this:
+This is a **[gulp-etl](https://gulpetl.com/)** plugin, and as such it is a [gulp](https://gulpjs.com/) plugin. **gulp-etl** plugins work with [ndjson](http://ndjson.org/) data streams/files which we call **Message Streams** and which are compliant with the [Singer specification](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#output). In the **gulp-etl** ecosystem, **taps** tap into an outside format or system (in this case, a CSV file) and convert their contents/output to a Message Stream, and **targets** convert/output Message Streams to an outside format or system. In this way, these modules can be stacked to convert from one format or system to another, either directly or with tranformations or other parsing in between. Message Streams look like this:
 
 ```
 {"type": "SCHEMA", "stream": "users", "key_properties": ["id"], "schema": {"required": ["id"], "type": "object", "properties": {"id": {"type": "integer"}}}}
@@ -20,13 +20,17 @@ for each row instead of objects. A falsey value for columns will be overridden t
 
 ##### Sample gulpfile.js
 ```
+/* parse all .CSV files in a folder into Message Stream files in a different folder */
+
+let gulp = require('gulp')
+var rename = require('gulp-rename')
 var tapCsv = require('gulp-etl-tap-csv').tapCsv
 
 exports.default = function() {
-    return src('data/*.csv')
+    return gulp.src('data/*.csv')
     .pipe(tapCsv({ columns:true }))
     .pipe(rename({ extname: ".ndjson" })) // rename to *.ndjson
-    .pipe(dest('output/'));
+    .pipe(gulp.dest('output/'));
 }
 ```
 ### Quick Start for Coding on This Plugin
@@ -38,7 +42,7 @@ exports.default = function() {
 * Clone this repo and run `npm install` to install npm packages
 * Debug: with [VScode](https://code.visualstudio.com/download) use `Open Folder` to open the project folder, then hit F5 to debug. This runs without compiling to javascript using [ts-node](https://www.npmjs.com/package/ts-node)
 * Test: `npm test` or `npm t`
-* Compile to javascript: `npm run build-codeonly`
+* Compile to javascript: `npm run build`
 
 ### Testing
 

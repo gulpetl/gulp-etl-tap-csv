@@ -1,5 +1,5 @@
 import Vinyl = require('vinyl');
-import tapCsv from '../plugin';
+import { tapCsv } from '../plugin';
 const from2 = require('from2');
 
 class lambdaResponse {

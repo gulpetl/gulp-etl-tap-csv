@@ -1,6 +1,6 @@
 {
   "name": "gulp-etl-tap-csv",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "repository": "https://github.com/gulpetl/gulp-etl-tap-csv",
   "description": "Convert CSV files to JSON compatible with gulp-etl",
   "main": "dist/js/plugin.js",
@@ -9,7 +9,7 @@
     "dist"
   ],
   "scripts": {
-    "build-codeonly": "tsc && tsc --module commonjs --outDir dist/lib",
+    "build": "tsc && tsc --module commonjs --outDir dist/lib",
     "test": "jest"
   },
   "author": "peterl@sbcotton.com",

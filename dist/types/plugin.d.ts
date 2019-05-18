@@ -1,1 +1,1 @@
-export default function tapCsv(configObj: any): any;
+export declare function tapCsv(configObj: any): any;

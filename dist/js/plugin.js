@@ -119,5 +119,5 @@ function tapCsv(configObj) {
     });
     return strm;
 }
-exports.default = tapCsv;
+exports.tapCsv = tapCsv;
 //# sourceMappingURL=plugin.js.map

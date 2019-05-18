@@ -1,5 +1,5 @@
 let gulp = require('gulp')
-import tapCsv from '../src/plugin'
+import { tapCsv } from '../src/plugin'
 
 import * as loglevel from 'loglevel'
 const log = loglevel.getLogger('gulpfile')
