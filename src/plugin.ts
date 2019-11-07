@@ -5,13 +5,69 @@ const pkginfo = require('pkginfo')(module); // project package.json info into mo
 const PLUGIN_NAME = module.exports.name;
 import * as loglevel from 'loglevel'
 const log = loglevel.getLogger(PLUGIN_NAME) // get a logger instance based on the project name
-log.setLevel((process.env.DEBUG_LEVEL || 'warn') as log.LogLevelDesc)
+log.setLevel((process.env.DEBUG_LEVEL || 'warn') as loglevel.LogLevelDesc)
+import * as fs from 'fs'
+const ps = require('pause-stream')()
+const ReadableStreamClone = require("readable-stream-clone");
 
 const parse = require('csv-parse')
 
 /** wrap incoming recordObject in a Singer RECORD Message object*/
 function createRecord(recordObject:Object, streamName: string) : any {
   return {type:"RECORD", stream:streamName, record:recordObject}
+}
+
+// open file and grab data until we have a full line; return first line (or, if file is all one line, return it all)
+async function getFirstLine (file:string) : Promise<string> {
+  return new Promise((resolve, reject) => {
+    let header : string = "";
+    let allData : string = "";
+
+    try {
+      const stream = fs.createReadStream(file, {encoding: 'utf8'});
+      stream.on('data', data => {
+        allData += data
+        let lines = allData.split(/\r?\n/)
+        if (lines.length > 1 && header == "") {
+          header = lines[0]
+          stream.destroy();
+        }
+      });
+      stream.on('close', () => {
+        resolve(header || allData)
+      })
+    }
+    catch (err) {
+      reject(err)
+    }
+  });
+}
+
+async function previewFirstLine (stream:any) : Promise<string> {
+  return new Promise((resolve, reject) => {
+    let header : string = "";
+    let allData : string = "";
+
+    try {
+      stream.on('data', (data: any) => {
+        allData += data
+        let lines = allData.split(/\r?\n/)
+        if (lines.length > 1 && header == "") {
+          header = lines[0]
+          stream.destroy();
+          // stream.pause()
+          // stream.unpipe()
+          resolve(header || allData)
+        }
+      })
+      stream.on('close', () => {
+        resolve(header || allData)
+      })
+    }
+    catch (err) {
+      reject(err)
+    }
+  });
 }
 
 /* This is a gulp-etl plugin. It is compliant with best practices for Gulp plugins (see
@@ -23,9 +79,30 @@ export function tapCsv(configObj: any) {
 
   // creating a stream through which each file will pass - a new instance will be created and invoked for each file 
   // see https://stackoverflow.com/a/52432089/5578474 for a note on the "this" param
-  const strm = through2.obj(function (this: any, file: Vinyl, encoding: string, cb: Function) {
+  const strm = through2.obj(async function (this: any, file: Vinyl, encoding: string, cb: Function) {
     const self = this
     let returnErr: any = null
+    let firstLine: string
+    let zz
+
+    if (file.isStream()) {
+      // grab first line of incoming file, which may be needed for some configObj options
+      try {
+        // let firstLine = await getFirstLine(file.path);
+        // zz = through2.obj().pipe(file.contents)
+        // zz = file.contents.pipe(ps.pause())
+        let z = new ReadableStreamClone(file.contents);
+        zz = new ReadableStreamClone(file.contents);
+        let firstLine = await previewFirstLine(z)
+
+        log.debug(firstLine)
+      }
+      catch (err) {
+        log.error(err);
+        self.emit('error', new PluginError(PLUGIN_NAME, err));
+      }
+    }
+
     const parser = parse(configObj)
 
     // post-process line object
@@ -105,7 +182,7 @@ export function tapCsv(configObj: any) {
 
     }
     else if (file.isStream()) {
-      file.contents = file.contents
+      file.contents = zz//file.contents
         .pipe(parser)
         .on('end', function () {
 
