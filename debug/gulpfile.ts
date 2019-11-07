@@ -35,7 +35,7 @@ function runTapCsv(callback: any) {
     .on('data', function (file:Vinyl) {
       log.info('Starting processing on ' + file.basename)
     })    
-    .pipe(tapCsv({raw:true/*, info:true */}))
+    .pipe(tapCsv({/*raw:true, info:true */ column_list_mode: true,normalize_column_names:true, rename_duplicates_columns:true}))
     .pipe(rename({
       extname: ".ndjson",
     }))      
