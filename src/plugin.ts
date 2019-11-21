@@ -9,9 +9,10 @@ log.setLevel((process.env.DEBUG_LEVEL || 'warn') as loglevel.LogLevelDesc)
 import * as fs from 'fs'
 const ps = require('pause-stream')()
 const ReadableStreamClone = require("readable-stream-clone");
-
+const cloneDeep = require('clone-deep');
 const parse = require('csv-parse')
 import * as syncparse from 'csv-parse/lib/sync'
+import { any } from 'expect';
 
 
 
@@ -92,15 +93,10 @@ async function column_list_mode(this: any, configObj: any, file: Vinyl){
 
 
 function regex_normalize_header(header: any){
-  //let lineObj = syncparse(header) 
     let lineObj = header;
     for(let Index in lineObj){
-      lineObj[Index] = lineObj[Index].replace(/[^a-zA-Z0-9]/g, "") as any;
-      console.log(lineObj[Index])
+     lineObj[Index]= lineObj[Index].replace(/[^a-zA-Z0-9]/g, "")
     }
-
-    // configObj.columns = lineObj[0];
-    console.log(lineObj)
     return lineObj;
 }
 
@@ -110,12 +106,26 @@ function renameduplicates(headers: any){
   for(let firstIndex in headers){
     for (let secondIndex in headers){
       if((headers[firstIndex] == headers[secondIndex]) && firstIndex != secondIndex){
-        headers[firstIndex] = "_" + dulplicate_headers_index+ headers[firstIndex];
+        headers[firstIndex] = "_" + dulplicate_headers_index + headers[firstIndex];
         dulplicate_headers_index ++;
       }
     }
   }
   return headers;
+}
+
+function createkeyvalueobject(originalheader: any, changedheader: any){
+  var arrayofobject=[];
+  
+  for(let Index in originalheader){
+    var object ={
+      key: originalheader[Index],
+      value: changedheader[Index]
+    }
+    arrayofobject.push(object);
+  }
+  return arrayofobject;
+
 }
 
 
@@ -139,14 +149,16 @@ export function tapCsv(configObj: any) {
     let zz
 
     if(configObj.column_list_mode || configObj.normalize_column_names || configObj.rename_duplicates_columns){
-      let headers = await column_list_mode(configObj, file);
+      let headersobj = await column_list_mode(configObj, file);
+      let originalheader = cloneDeep(headersobj)
       if(configObj.normalize_column_names){
-        headers = regex_normalize_header(headers);//normalizes the headers
+        headersobj = regex_normalize_header(headersobj);//normalizes the headers
       }
       if(configObj.rename_duplicates_columns){
-        headers = renameduplicates(headers);//remanes duplicates with starting with _1
+        headersobj = renameduplicates(headersobj);//renames duplicates with starting with _1
       }
-      file.contents= Buffer.from(JSON.stringify(headers));//headers are written 
+      let finalobject = createkeyvalueobject(originalheader, headersobj)
+      file.contents= Buffer.from(JSON.stringify(finalobject));//headers are written 
       return cb(returnErr, file)
     }
     else {
