@@ -20,31 +20,6 @@ function createRecord(recordObject:Object, streamName: string) : any {
   return {type:"RECORD", stream:streamName, record:recordObject}
 }
 
-// open file and grab data until we have a full line; return first line (or, if file is all one line, return it all)
-async function getFirstLine (file:string) : Promise<string> {
-  return new Promise((resolve, reject) => {
-    let header : string = "";
-    let allData : string = "";
-
-    try {
-      const stream = fs.createReadStream(file, {encoding: 'utf8'});
-      stream.on('data', data => {
-        allData += data
-        let lines = allData.split(/\r?\n/)
-        if (lines.length > 1 && header == "") {
-          header = lines[0]
-          stream.destroy();
-        }
-      });
-      stream.on('close', () => {
-        resolve(header || allData)
-      })
-    }
-    catch (err) {
-      reject(err)
-    }
-  });
-}
 
 async function previewFirstLineStream (stream:any) : Promise<string> {
   return new Promise((resolve, reject) => {
@@ -73,36 +48,23 @@ async function previewFirstLineStream (stream:any) : Promise<string> {
   });
 }
 
-function previewFirstLineBuffer(file: Vinyl){ 
-  let header;
-  if(file.isBuffer()){    
-      let tempStr = file.contents.toString();
-      header = tempStr.split(/\r?\n/)[0];
-  }
-  return header;
-}
 
 async function column_list_mode(this: any, configObj: any, file: Vinyl){
   const self = this;
   //configurations for column_list_mode
   configObj.columns = false;
-  config_header_only(configObj)
+  configObj.from = 0;
+  configObj.to = 1;//just gets the headers
   let firstLine: any
 
   if (file.isStream()) {
     // grab first line of incoming file, which may be needed for some configObj options
     try {
-      // let firstLine = await getFirstLine(file.path);
-      // zz = through2.obj().pipe(file.contents)
-      // zz = file.contents.pipe(ps.pause())
       let z = new ReadableStreamClone(file.contents);
       let zz = new ReadableStreamClone(file.contents);
       let templine = await previewFirstLineStream(z)
       let header = syncparse(templine)
-      firstLine = header[0]
-
-      log.debug(firstLine)
-      
+      firstLine = header[0]      
     }
     catch (err) {
       log.error(err);
@@ -111,104 +73,50 @@ async function column_list_mode(this: any, configObj: any, file: Vinyl){
   }
 
   if(file.isBuffer()){
-    try{
-    
-     let templine: any = previewFirstLineBuffer(file)
-     let header = syncparse(templine)
-      // let tempStr = file.contents.toString();
-      // let header = tempStr.split(/\r?\n/)[0];
-      firstLine = header[0]
+    try{  
+     //let templine: any = previewFirstLineBuffer(file)
 
+    let tempStr = file.contents.toString();
+    let templine = tempStr.split(/\r?\n/)[0];
+    let header = syncparse(templine)
+    firstLine = header[0]
+    console.log(firstLine)
     }
     catch(err){
       log.error(err);
       self.emit('error', new PluginError(PLUGIN_NAME, err));
     }
-  
-
   }
-  console.log(firstLine);
-
   return firstLine;
 }
 
 
-async function normalize_column_names(this: any, configObj: any, file: Vinyl){
-  const self = this;
-  config_header_only(configObj)
-  var normalized_header;
-
-  if (file.isStream()) {
-    // grab first line of incoming file, which may be needed for some configObj options
-    try {
-      // let firstLine = await getFirstLine(file.path);
-      // zz = through2.obj().pipe(file.contents)
-      // zz = file.contents.pipe(ps.pause())
-      let z = new ReadableStreamClone(file.contents);
-      let zz = new ReadableStreamClone(file.contents);
-      let firstLine = await previewFirstLineStream(z)
-      log.debug(firstLine)
-
-      normalized_header = regex_normalize_header(firstLine)
-      
-    }
-    catch (err) {
-      log.error(err);
-      self.emit('error', new PluginError(PLUGIN_NAME, err));
-    }
-  }
-
-  if(file.isBuffer()){
-    try{
-
-     let header = previewFirstLineBuffer(file)
-      // let tempStr = file.contents.toString();
-      // let header = tempStr.split(/\r?\n/)[0];
-  
-      normalized_header = regex_normalize_header(header)
-    }
-    catch(err){
-      log.error(err);
-      self.emit('error', new PluginError(PLUGIN_NAME, err));
-    }
-    
-
-    // let tempStr = file.contents.toString();
-    // let header = tempStr.split(/\r?\n/)[0];
-
-    // regex_normalize_header(header)
-
-    // let lineObj = syncparse(header) 
-
-    // for(let Index in lineObj[0]){
-    //   lineObj[0][Index] = lineObj[0][Index].replace(/[^a-zA-Z0-9]/g, "") as any;
-    // }
-    // configObj.columns = lineObj[0];
-    // console.log(configObj.columns)
-
-  }
-  console.log(normalized_header); 
-  return normalized_header;
-}
-
 function regex_normalize_header(header: any){
-  let lineObj = syncparse(header) 
-
-    for(let Index in lineObj[0]){
-      lineObj[0][Index] = lineObj[0][Index].replace(/[^a-zA-Z0-9]/g, "") as any;
+  //let lineObj = syncparse(header) 
+    let lineObj = header;
+    for(let Index in lineObj){
+      lineObj[Index] = lineObj[Index].replace(/[^a-zA-Z0-9]/g, "") as any;
+      console.log(lineObj[Index])
     }
 
     // configObj.columns = lineObj[0];
-    console.log(lineObj[0])
-    return lineObj[0];
-}
-
-function config_header_only(configObj: any){
-  configObj.from = 0;
-  configObj.to = 1;
+    console.log(lineObj)
+    return lineObj;
 }
 
 
+function renameduplicates(headers: any){
+  let dulplicate_headers_index = 1;
+  for(let firstIndex in headers){
+    for (let secondIndex in headers){
+      if((headers[firstIndex] == headers[secondIndex]) && firstIndex != secondIndex){
+        headers[firstIndex] = "_" + dulplicate_headers_index+ headers[firstIndex];
+        dulplicate_headers_index ++;
+      }
+    }
+  }
+  return headers;
+}
 
 
 /* This is a gulp-etl plugin. It is compliant with best practices for Gulp plugins (see
@@ -219,6 +127,7 @@ export function tapCsv(configObj: any) {
   if (!configObj.columns) configObj.columns = true // we don't allow false for columns; it results in arrays instead of objects for each record
   if (!configObj.column_list_mode) configObj.column_list_mode = false //if the falsey value is passed then it will assume the column_list_mode to be false
   if (!configObj.normalize_column_names) configObj.normalize_column_names = false
+  if (!configObj.rename_duplicates_columns) configObj.rename_duplicates_columns= false
 
 
   // creating a stream through which each file will pass - a new instance will be created and invoked for each file 
@@ -229,21 +138,17 @@ export function tapCsv(configObj: any) {
     let firstLine: string
     let zz
 
-    if(configObj.normalize_column_names){
-       let test = await normalize_column_names(configObj, file)
-       console.log(test)
-       file.contents = Buffer.from(test);
+    if(configObj.column_list_mode || configObj.normalize_column_names || configObj.rename_duplicates_columns){
+      let headers = await column_list_mode(configObj, file);
+      if(configObj.normalize_column_names){
+        headers = regex_normalize_header(headers);//normalizes the headers
+      }
+      if(configObj.rename_duplicates_columns){
+        headers = renameduplicates(headers);//remanes duplicates with starting with _1
+      }
+      file.contents= Buffer.from(JSON.stringify(headers));//headers are written 
       return cb(returnErr, file)
-      //result is printed in the console but what left to do is dump it back to file
     }
-    else if(configObj.column_list_mode){
-      let test = await column_list_mode(configObj, file)
-      file.contents = Buffer.from(JSON.stringify(test));
-      console.log(test)
-
-      return cb(returnErr, file)
-      //result is printed in the console but what left to do is dump it back to file
-    } 
     else {
       const parser = parse(configObj)
 

@@ -25,6 +25,7 @@
     "from2": "^2.3.0",
     "gulp-error-handle": "^1.0.1",
     "loglevel": "^1.6.4",
+    "pause-stream": "0.0.11",
     "pkginfo": "^0.4.1",
     "plugin-error": "^1.0.1",
     "readable-stream-clone": "0.0.4",
