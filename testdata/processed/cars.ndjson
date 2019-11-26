@@ -1,1 +1,1 @@
-[{"key":"car  $$Model","value":"carModel"},{"key":"price","value":"_1price"},{"key":"price","value":"price"}]
+[{"originalname":"car  $$Model","cleanedname":"carModel","newname":"carModel"},{"originalname":"price","cleanedname":"_1price","newname":"_1price"},{"originalname":"price","cleanedname":"price","newname":"price"}]

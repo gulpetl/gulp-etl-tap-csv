@@ -18,6 +18,7 @@ import Vinyl = require('vinyl')
 
 let gulpBufferMode = false;
 
+
 function switchToBuffer(callback: any) {
   gulpBufferMode = true;
 
@@ -35,7 +36,7 @@ function runTapCsv(callback: any) {
     .on('data', function (file:Vinyl) {
       log.info('Starting processing on ' + file.basename)
     })    
-    .pipe(tapCsv({/*raw:true, info:true */ column_list_mode: true,normalize_column_names:true, rename_duplicates_columns:true}))
+    .pipe(tapCsv({ /*columns: ['car', 'testprice','testanotherprice']*//*raw:true, info:true */column_list:true,column_list_object:true, column_list_mode: true,normalize_column_names:true, rename_duplicates_columns:true}))
     .pipe(rename({
       extname: ".ndjson",
     }))      
