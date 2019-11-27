@@ -120,8 +120,9 @@ function createkeyvalueobject(originalheader: any, changedheader: any){
   for(let Index in originalheader){
     var object ={
       originalname: originalheader[Index],
-      cleanedname: changedheader[Index],
-      newname: changedheader[Index],
+      key: changedheader[Index],
+      header: originalheader[Index],
+      name: changedheader[Index],
     }
     arrayofobject.push(object);
   }
@@ -139,8 +140,7 @@ export function tapCsv(configObj: any) {
   if (!configObj.column_list_mode) configObj.column_list_mode = false //if the falsey value is passed then it will assume the column_list_mode to be false
   if (!configObj.normalize_column_names) configObj.normalize_column_names = false
   if (!configObj.rename_duplicates_columns) configObj.rename_duplicates_columns= false
-  if (!configObj.column_list) configObj.column_list= false
-  if (!configObj.column_list_object) configObj.rename_column_list_object= false
+
 
 
   // creating a stream through which each file will pass - a new instance will be created and invoked for each file 
@@ -162,11 +162,15 @@ export function tapCsv(configObj: any) {
       }
       let finalobject = createkeyvalueobject(originalheader, headersobj)
 
-      if(configObj.column_list_object){
+      if(configObj.column_list_mode == 'reversible'){
         file.contents= Buffer.from(JSON.stringify(finalobject));
+        file.extname = '.json';
+        file.stem = file.stem + '.column_list.reversible';
       }
       else{
         file.contents= Buffer.from(JSON.stringify(headersobj))
+        file.extname = '.json';
+        file.stem = file.stem + '.column_list.simple';
       }
       
       //file.contents= Buffer.from(JSON.stringify(finalobject));//headers are dumped as key value pairs
