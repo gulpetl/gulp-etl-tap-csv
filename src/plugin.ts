@@ -7,10 +7,10 @@ import * as loglevel from 'loglevel'
 const log = loglevel.getLogger(PLUGIN_NAME) // get a logger instance based on the project name
 log.setLevel((process.env.DEBUG_LEVEL || 'warn') as loglevel.LogLevelDesc)
 import * as fs from 'fs'
-const ps = require('pause-stream')()
+// const ps = require('pause-stream')()
 const ReadableStreamClone = require("readable-stream-clone");
 
-const parse = require('csv-parse')
+import * as parse from 'csv-parse/lib'
 
 /** wrap incoming recordObject in a Singer RECORD Message object*/
 function createRecord(recordObject:Object, streamName: string) : any {
@@ -151,7 +151,7 @@ export function tapCsv(configObj: any) {
       return cb(returnErr, file)
     }
     else if (file.isBuffer()) {
-
+      let asdf =parse(file.contents as Buffer, configObj)
 
       parse(file.contents as Buffer, configObj, function(err:any, linesArray : []){
         // this callback function runs when the parser finishes its work, returning an array parsed lines 
