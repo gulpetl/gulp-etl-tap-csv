@@ -7,7 +7,7 @@ import * as loglevel from 'loglevel'
 const log = loglevel.getLogger(PLUGIN_NAME) // get a logger instance based on the project name
 log.setLevel((process.env.DEBUG_LEVEL || 'warn') as log.LogLevelDesc)
 
-const parse = require('csv-parse')
+import { parse } from 'csv-parse';
 
 /** wrap incoming recordObject in a Singer RECORD Message object*/
 function createRecord(recordObject:Object, streamName: string) : any {
@@ -57,7 +57,7 @@ export function tapCsv(configObj: any) {
             this.push(handledLine + '\n');
           }
         } catch (err) {
-          returnErr = new PluginError(PLUGIN_NAME, err);
+          returnErr = new PluginError(PLUGIN_NAME, err as Error);
         }
   
         callback(returnErr)
@@ -91,7 +91,7 @@ export function tapCsv(configObj: any) {
               resultArray.push(tempStr);
             }
           } catch (err) {
-            returnErr = new PluginError(PLUGIN_NAME, err);
+            returnErr = new PluginError(PLUGIN_NAME, err as Error);
           }
         }
         let data:string = resultArray.join('\n')

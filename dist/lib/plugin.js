@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.tapCsv = void 0;
 const through2 = require('through2');
 const PluginError = require("plugin-error");
 const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
@@ -7,7 +8,7 @@ const PLUGIN_NAME = module.exports.name;
 const loglevel = require("loglevel");
 const log = loglevel.getLogger(PLUGIN_NAME); // get a logger instance based on the project name
 log.setLevel((process.env.DEBUG_LEVEL || 'warn'));
-const parse = require('csv-parse');
+const csv_parse_1 = require("csv-parse");
 /** wrap incoming recordObject in a Singer RECORD Message object*/
 function createRecord(recordObject, streamName) {
     return { type: "RECORD", stream: streamName, record: recordObject };
@@ -25,7 +26,7 @@ function tapCsv(configObj) {
     const strm = through2.obj(function (file, encoding, cb) {
         const self = this;
         let returnErr = null;
-        const parser = parse(configObj);
+        const parser = csv_parse_1.parse(configObj);
         // post-process line object
         const handleLine = (lineObj, _streamName) => {
             if (parser.options.raw || parser.options.info) {
@@ -68,7 +69,7 @@ function tapCsv(configObj) {
             return cb(returnErr, file);
         }
         else if (file.isBuffer()) {
-            parse(file.contents, configObj, function (err, linesArray) {
+            csv_parse_1.parse(file.contents, configObj, function (err, linesArray) {
                 // this callback function runs when the parser finishes its work, returning an array parsed lines 
                 let tempLine;
                 let resultArray = [];
