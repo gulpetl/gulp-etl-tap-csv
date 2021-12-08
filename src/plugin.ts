@@ -9,9 +9,25 @@ log.setLevel((process.env.DEBUG_LEVEL || 'warn') as log.LogLevelDesc)
 
 import { parse } from 'csv-parse';
 
+/** creates an object from an array, using as its keys a number representing the position in the original array */
+function arrayToObject (arr : Array<any>):Object {
+  let newObj : any = {};
+  arr.forEach((val:any, idx:number) => {
+    newObj[idx] = val;
+  })
+
+  return newObj;
+}
+
 /** wrap incoming recordObject in a Singer RECORD Message object*/
 function createRecord(recordObject:Object, streamName: string) : any {
-  return {type:"RECORD", stream:streamName, record:recordObject}
+  let rec = recordObject;
+  if (Array.isArray(recordObject)) {
+    // Singer Spec requires a "JSON map" (i.e. an object), so we convert an array to an object to comply with the spec
+    rec = arrayToObject(recordObject);
+  }
+
+  return {type:"RECORD", stream:streamName, record:rec};
 }
 
 /* This is a gulp-etl plugin. It is compliant with best practices for Gulp plugins (see
@@ -19,7 +35,7 @@ https://github.com/gulpjs/gulp/blob/master/docs/writing-a-plugin/guidelines.md#w
 and like all gulp-etl plugins it accepts a configObj as its first parameter */
 export function tapCsv(configObj: any) {
   if (!configObj) configObj = {}
-  if (!configObj.columns) configObj.columns = true // we don't allow false for columns; it results in arrays instead of objects for each record
+  if (configObj.columns == undefined) configObj.columns = true // we default columns to true, which tries to auto-discover column names from first line
 
   // creating a stream through which each file will pass - a new instance will be created and invoked for each file 
   // see https://stackoverflow.com/a/52432089/5578474 for a note on the "this" param
