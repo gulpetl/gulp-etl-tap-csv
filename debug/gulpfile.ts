@@ -14,7 +14,7 @@ const errorHandler = require('gulp-error-handle'); // handle all errors in one h
 const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
 const PLUGIN_NAME = module.exports.name;
 
-import Vinyl = require('vinyl') 
+import * as Vinyl from 'vinyl'
 
 let gulpBufferMode = false;
 

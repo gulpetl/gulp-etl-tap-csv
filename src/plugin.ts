@@ -3,9 +3,9 @@ import Vinyl = require('vinyl')
 import PluginError = require('plugin-error');
 const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
 const PLUGIN_NAME = module.exports.name;
-import * as loglevel from 'loglevel'
-const log = loglevel.getLogger(PLUGIN_NAME) // get a logger instance based on the project name
-log.setLevel((process.env.DEBUG_LEVEL || 'warn') as log.LogLevelDesc)
+import {getLogger, LogLevelDesc} from 'loglevel'
+const log = getLogger(PLUGIN_NAME) // get a logger instance based on the project name
+log.setLevel((process.env.DEBUG_LEVEL || 'warn') as LogLevelDesc)
 
 import { parse } from 'csv-parse';
 
