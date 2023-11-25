@@ -6,6 +6,8 @@ const PLUGIN_NAME = module.exports.name;
 import {getLogger, LogLevelDesc} from 'loglevel'
 const log = getLogger(PLUGIN_NAME) // get a logger instance based on the project name
 log.setLevel((process.env.DEBUG_LEVEL || 'warn') as LogLevelDesc)
+import replaceExt = require('replace-ext');
+import merge from 'merge';
 
 import { parse } from 'csv-parse';
 
@@ -33,16 +35,40 @@ function createRecord(recordObject:Object, streamName: string) : any {
 /* This is a gulp-etl plugin. It is compliant with best practices for Gulp plugins (see
 https://github.com/gulpjs/gulp/blob/master/docs/writing-a-plugin/guidelines.md#what-does-a-good-plugin-look-like ),
 and like all gulp-etl plugins it accepts a configObj as its first parameter */
-export function tapCsv(configObj: any) {
-  if (!configObj) configObj = {}
-  if (configObj.columns == undefined) configObj.columns = true // we default columns to true, which tries to auto-discover column names from first line
+export function tapCsv(origConfigObj: any) {
 
   // creating a stream through which each file will pass - a new instance will be created and invoked for each file 
   // see https://stackoverflow.com/a/52432089/5578474 for a note on the "this" param
   const strm = through2.obj(function (this: any, file: Vinyl, encoding: string, cb: Function) {
+
+    let configObj;
+    try {
+      if (file.data) {
+        // look for a property based on our plugin's name; assumes a complex object meant for multiple plugins
+        let dataObj = file.data[PLUGIN_NAME];
+        // if we didn't find a config above, use the entire file.data object as our config
+        if (!dataObj) dataObj = file.data;
+        // merge file.data config into our passed-in origConfigObj
+        // merge.recursive(origConfigObj, dataObj); // <-- huge bug: can't mess with origConfigObj, because changes there will bleed into subsequent calls
+        configObj = merge.recursive(true, origConfigObj, dataObj);
+      }
+      else
+        configObj = merge.recursive(true, origConfigObj);
+    }
+    catch { }
+    if (configObj.columns === undefined) configObj.columns = true // we default columns to true, which tries to auto-discover column names from first line
+
     const self = this
     let returnErr: any = null
     const parser = parse(configObj)
+
+
+    try {
+    file.path = replaceExt(file.path, '.ndjson')
+    }
+    catch (err:any) {
+      console.error(err);
+    }
 
     // post-process line object
     const handleLine = (lineObj: any, _streamName : string): object | null => {

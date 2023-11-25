@@ -39,6 +39,12 @@ exports.default = function() {
 }
 ```
 
+### gulp-data
+This plugin supports the use of the [gulp-data](https://github.com/colynb/gulp-data#readme) api for passing in its configObj parameter. This
+allows data/options from the pipeline to be used to create options passed to this plugin when it runs. 
+
+See the demonstration in `debug/gulpfile.ts` for usage examples.
+
 ### Quick Start for Coding on This Plugin
 
 * Dependencies:

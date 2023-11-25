@@ -5,9 +5,11 @@ const through2 = require('through2');
 const PluginError = require("plugin-error");
 const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
 const PLUGIN_NAME = module.exports.name;
-const loglevel = require("loglevel");
-const log = loglevel.getLogger(PLUGIN_NAME); // get a logger instance based on the project name
+const loglevel_1 = require("loglevel");
+const log = (0, loglevel_1.getLogger)(PLUGIN_NAME); // get a logger instance based on the project name
 log.setLevel((process.env.DEBUG_LEVEL || 'warn'));
+const replaceExt = require("replace-ext");
+const merge_1 = require("merge");
 const csv_parse_1 = require("csv-parse");
 /** creates an object from an array, using as its keys a number representing the position in the original array */
 function arrayToObject(arr) {
@@ -29,17 +31,37 @@ function createRecord(recordObject, streamName) {
 /* This is a gulp-etl plugin. It is compliant with best practices for Gulp plugins (see
 https://github.com/gulpjs/gulp/blob/master/docs/writing-a-plugin/guidelines.md#what-does-a-good-plugin-look-like ),
 and like all gulp-etl plugins it accepts a configObj as its first parameter */
-function tapCsv(configObj) {
-    if (!configObj)
-        configObj = {};
-    if (configObj.columns == undefined)
-        configObj.columns = true; // we default columns to true, which tries to auto-discover column names from first line
+function tapCsv(origConfigObj) {
     // creating a stream through which each file will pass - a new instance will be created and invoked for each file 
     // see https://stackoverflow.com/a/52432089/5578474 for a note on the "this" param
     const strm = through2.obj(function (file, encoding, cb) {
+        let configObj;
+        try {
+            if (file.data) {
+                // look for a property based on our plugin's name; assumes a complex object meant for multiple plugins
+                let dataObj = file.data[PLUGIN_NAME];
+                // if we didn't find a config above, use the entire file.data object as our config
+                if (!dataObj)
+                    dataObj = file.data;
+                // merge file.data config into our passed-in origConfigObj
+                // merge.recursive(origConfigObj, dataObj); // <-- huge bug: can't mess with origConfigObj, because changes there will bleed into subsequent calls
+                configObj = merge_1.default.recursive(true, origConfigObj, dataObj);
+            }
+            else
+                configObj = merge_1.default.recursive(true, origConfigObj);
+        }
+        catch (_a) { }
+        if (configObj.columns === undefined)
+            configObj.columns = true; // we default columns to true, which tries to auto-discover column names from first line
         const self = this;
         let returnErr = null;
-        const parser = csv_parse_1.parse(configObj);
+        const parser = (0, csv_parse_1.parse)(configObj);
+        try {
+            file.path = replaceExt(file.path, '.ndjson');
+        }
+        catch (err) {
+            console.error(err);
+        }
         // post-process line object
         const handleLine = (lineObj, _streamName) => {
             if (parser.options.raw || parser.options.info) {
@@ -82,7 +104,7 @@ function tapCsv(configObj) {
             return cb(returnErr, file);
         }
         else if (file.isBuffer()) {
-            csv_parse_1.parse(file.contents, configObj, function (err, linesArray) {
+            (0, csv_parse_1.parse)(file.contents, configObj, function (err, linesArray) {
                 // this callback function runs when the parser finishes its work, returning an array parsed lines 
                 let tempLine;
                 let resultArray = [];
