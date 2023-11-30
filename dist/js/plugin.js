@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tapCsv = exports.csvParseText = exports.convertCsvObjectToRecordLine = void 0;
+exports.tapCsv = exports.extractConfig = exports.csvParseText = exports.convertCsvObjectToRecordLine = void 0;
 const through2 = require('through2');
 const PluginError = require("plugin-error");
 const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
@@ -86,6 +86,34 @@ function csvParseText(csvLines, streamName, configObj = {}) {
     });
 }
 exports.csvParseText = csvParseText;
+let localDefaultConfigObj = { columns: true };
+/**
+ * Merges config information for this plugin from all potential sources
+ * @param specificConfigObj A configObj set specifically for this plugin
+ * @param pipelineConfigObj A "super" configObj (e.g. file.data or msg.config) for the whole pipeline which may/may not apply to this plugin; if it
+ * does, its parameters override any matching ones from specificConfigObj.
+ * @param defaultConfigObj A default configObj, whose parameters are overridden by all others
+ */
+function extractConfig(specificConfigObj, pipelineConfigObj, defaultConfigObj = localDefaultConfigObj) {
+    let configObj;
+    try {
+        if (pipelineConfigObj) {
+            // look for a property based on our plugin's name; assumes a complex object meant for multiple plugins
+            let dataObj = pipelineConfigObj[PLUGIN_NAME];
+            // if we didn't find a config above, use the entire file.data object as our config
+            if (!dataObj)
+                dataObj = pipelineConfigObj;
+            // merge superConfigObj config into our passed-in origConfigObj
+            // merge.recursive(origConfigObj, dataObj); // <-- huge bug: can't mess with origConfigObj, because changes there will bleed into subsequent calls
+            configObj = merge_1.default.recursive(true, defaultConfigObj, specificConfigObj, dataObj);
+        }
+        else
+            configObj = merge_1.default.recursive(true, defaultConfigObj, specificConfigObj);
+    }
+    catch (_a) { }
+    return configObj;
+}
+exports.extractConfig = extractConfig;
 /** creates an object from an array, using as its keys a number representing the position in the original array */
 function arrayToObject(arr) {
     let newObj = {};
@@ -112,24 +140,7 @@ function tapCsv(origConfigObj) {
     // creating a stream through which each file will pass - a new instance will be created and invoked for each file 
     // see https://stackoverflow.com/a/52432089/5578474 for a note on the "this" param
     const strm = through2.obj(function (file, encoding, cb) {
-        let configObj;
-        try {
-            if (file.data) {
-                // look for a property based on our plugin's name; assumes a complex object meant for multiple plugins
-                let dataObj = file.data[PLUGIN_NAME];
-                // if we didn't find a config above, use the entire file.data object as our config
-                if (!dataObj)
-                    dataObj = file.data;
-                // merge file.data config into our passed-in origConfigObj
-                // merge.recursive(origConfigObj, dataObj); // <-- huge bug: can't mess with origConfigObj, because changes there will bleed into subsequent calls
-                configObj = merge_1.default.recursive(true, origConfigObj, dataObj);
-            }
-            else
-                configObj = merge_1.default.recursive(true, origConfigObj);
-        }
-        catch (_a) { }
-        if (configObj.columns === undefined)
-            configObj.columns = true; // we default columns to true, which tries to auto-discover column names from first line
+        let configObj = extractConfig(origConfigObj, file.data);
         const self = this;
         let returnErr = null;
         const parser = (0, csv_parse_1.parse)(configObj);

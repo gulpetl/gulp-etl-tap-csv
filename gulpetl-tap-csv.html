@@ -1,0 +1,36 @@
+<script type="text/javascript">
+    RED.nodes.registerType('gulpetl-tap-csv',{
+        category: 'gulpetl',
+        // color: '#A7579D',
+        // color: '#F9258E',
+        color: '#3386BB',
+        defaults: {
+            name: {value:""}
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "file.svg",
+        label: function() {
+            return this.name||"gulpetl-tap-csv";
+        },
+        paletteLabel: function() {
+            return this.name||"tap-csv";
+        },
+
+    });
+</script>
+
+<script type="text/html" data-template-name="gulpetl-tap-csv">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="gulpetl-tap-csv">
+    <p>Converts a gulp-etl Message Stream to CSV lines
+        <br>
+        <br><b>Input</b>: CSV lines (as a string, delimited by CR, LF, or CRLF)
+        <br><b>Output</b>: NDJSON lines (as a newline-delimited string)
+    </p>
+</script>

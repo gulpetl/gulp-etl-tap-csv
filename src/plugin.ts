@@ -89,6 +89,33 @@ export function csvParseText(csvLines: string | Buffer, streamName: string, conf
   })
 }
 
+let localDefaultConfigObj: any = {columns:true};
+/**
+ * Merges config information for this plugin from all potential sources
+ * @param specificConfigObj A configObj set specifically for this plugin
+ * @param pipelineConfigObj A "super" configObj (e.g. file.data or msg.config) for the whole pipeline which may/may not apply to this plugin; if it
+ * does, its parameters override any matching ones from specificConfigObj.
+ * @param defaultConfigObj A default configObj, whose parameters are overridden by all others
+ */
+export function extractConfig(specificConfigObj:any, pipelineConfigObj?:any, defaultConfigObj:any = localDefaultConfigObj) : any {
+  let configObj: any;
+  try {
+    if (pipelineConfigObj) {
+      // look for a property based on our plugin's name; assumes a complex object meant for multiple plugins
+      let dataObj = pipelineConfigObj[PLUGIN_NAME];
+      // if we didn't find a config above, use the entire file.data object as our config
+      if (!dataObj) dataObj = pipelineConfigObj;
+      // merge superConfigObj config into our passed-in origConfigObj
+      // merge.recursive(origConfigObj, dataObj); // <-- huge bug: can't mess with origConfigObj, because changes there will bleed into subsequent calls
+      configObj = merge.recursive(true, defaultConfigObj, specificConfigObj, dataObj, );
+    }
+    else
+      configObj = merge.recursive(true, defaultConfigObj, specificConfigObj);
+  }
+  catch { }
+  return configObj;
+}
+
 /** creates an object from an array, using as its keys a number representing the position in the original array */
 function arrayToObject(arr: Array<any>): Object {
   let newObj: any = {};
@@ -121,22 +148,7 @@ export function tapCsv(origConfigObj: any) {
   // see https://stackoverflow.com/a/52432089/5578474 for a note on the "this" param
   const strm = through2.obj(function (this: any, file: Vinyl, encoding: string, cb: Function) {
 
-    let configObj: any;
-    try {
-      if (file.data) {
-        // look for a property based on our plugin's name; assumes a complex object meant for multiple plugins
-        let dataObj = file.data[PLUGIN_NAME];
-        // if we didn't find a config above, use the entire file.data object as our config
-        if (!dataObj) dataObj = file.data;
-        // merge file.data config into our passed-in origConfigObj
-        // merge.recursive(origConfigObj, dataObj); // <-- huge bug: can't mess with origConfigObj, because changes there will bleed into subsequent calls
-        configObj = merge.recursive(true, origConfigObj, dataObj);
-      }
-      else
-        configObj = merge.recursive(true, origConfigObj);
-    }
-    catch { }
-    if (configObj.columns === undefined) configObj.columns = true // we default columns to true, which tries to auto-discover column names from first line
+    let configObj:any = extractConfig(origConfigObj, file.data);
 
     const self = this
     let returnErr: any = null
