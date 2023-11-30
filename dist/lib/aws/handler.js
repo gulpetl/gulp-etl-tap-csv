@@ -40,6 +40,7 @@ function doParse(event, context, callback) {
         }
         else {
             file = new Vinyl({
+                path: "dummy",
                 contents: Buffer.from(toParse)
             });
         }

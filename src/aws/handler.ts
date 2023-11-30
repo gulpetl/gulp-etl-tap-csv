@@ -27,6 +27,7 @@ export async function doParse(event:any, context:any, callback:any){
     file = toParse;
   }else{
     file = new Vinyl({
+      path:"dummy",
       contents: Buffer.from(toParse)
     })
   }

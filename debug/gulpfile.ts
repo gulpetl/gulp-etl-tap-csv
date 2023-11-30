@@ -55,19 +55,5 @@ function runTapCsv(callback: any) {
     })
 
 }
-
-export function csvParseWithoutGulp(callback: any) {
-
-  const parse = require('csv-parse')
-
-  var parser = parse({delimiter: ',', columns:true});
-  
-  require('fs').createReadStream('../testdata/cars.csv').pipe(parser)
-  .on("data",(data:any)=>{
-    console.log(data)
-  });
-  
-}
-
 exports.default = gulp.series(runTapCsv)
 exports.runTapCsvBuffer = gulp.series(switchToBuffer, runTapCsv)

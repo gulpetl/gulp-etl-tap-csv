@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tapCsv = void 0;
+exports.tapCsv = exports.csvParseText = exports.convertCsvObjectToRecordLine = void 0;
 const through2 = require('through2');
 const PluginError = require("plugin-error");
 const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
@@ -11,6 +11,81 @@ log.setLevel((process.env.DEBUG_LEVEL || 'warn'));
 const replaceExt = require("replace-ext");
 const merge_1 = require("merge");
 const csv_parse_1 = require("csv-parse");
+const stream_transform_1 = require("stream-transform");
+/**
+ * Convert a standard object into an NDJSON line; suitable for calling directly or as a Handler for [stream-transform](https://csv.js.org/transform/handler/)
+ * @param dataObj An object (from csvParse) representing a line
+ * @param params A `params` object; may be passed in directly, or, when calling as a stream-transform handler it is passed as `options.params` .
+ * NOTE: params is REQUIRED; if no params is passed when run as a Handler, the whole stream will fail quietly.
+ * @returns A [RECORD Message](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#record-message) created from dataObj, as a string
+ */
+function convertCsvObjectToRecordLine(dataObj, params) {
+    // post-process line object
+    const handleLine = (lineObj, _streamName) => {
+        var _a, _b;
+        if (((_a = params === null || params === void 0 ? void 0 : params.configObj) === null || _a === void 0 ? void 0 : _a.raw) || ((_b = params === null || params === void 0 ? void 0 : params.configObj) === null || _b === void 0 ? void 0 : _b.info)) {
+            let newObj = createRecord(lineObj.record, _streamName);
+            if (lineObj.raw)
+                newObj.raw = lineObj.raw;
+            if (lineObj.info)
+                newObj.info = lineObj.info;
+            lineObj = newObj;
+        }
+        else {
+            lineObj = createRecord(lineObj, _streamName);
+        }
+        return lineObj;
+    };
+    try {
+        let handledObj = handleLine(dataObj, (params === null || params === void 0 ? void 0 : params.streamName) || "");
+        if (handledObj) {
+            let handledLine = JSON.stringify(handledObj);
+            log.debug(handledLine);
+            return handledLine + '\n';
+        }
+    }
+    catch (err) {
+        // consider: don't blow up the stream here? OTOH, not sure what type of problem from csvParse would cause an error here, pretty serious..?
+        throw new Error(err);
+    }
+    return null;
+}
+exports.convertCsvObjectToRecordLine = convertCsvObjectToRecordLine;
+/**
+ * Converts an [ndjson](https://ndjson.org/) input into an array of objects and passes the array to csvStringify for conversion to CSV
+ * @param ndjsonLines May be a string or Buffer representing ndjson lines, or an array of json strings or an array of objects
+ * @param configObj [CSV Stringify options object](https://csv.js.org/stringify/options/); optional
+ * @returns A string representation of the CSV lines
+ */
+function csvParseText(csvLines, streamName, configObj = {}) {
+    return new Promise((resolve, reject) => {
+        // run csv-parse
+        (0, csv_parse_1.parse)(csvLines, configObj, function (err, linesArray) {
+            // this callback function runs when the parser finishes its work, returning an array parsed lines 
+            // log.debug(PLUGIN_NAME + " data:",linesArray);
+            if (err)
+                reject(new PluginError(PLUGIN_NAME, err));
+            // else resolve(data);
+            let resultArray = [];
+            // we'll call handleLine on each line
+            for (let dataIdx in linesArray) {
+                try {
+                    let tempLine = convertCsvObjectToRecordLine(linesArray[dataIdx], { streamName, configObj });
+                    if (tempLine) {
+                        resultArray.push(tempLine);
+                    }
+                }
+                catch (err) {
+                    reject(new PluginError(PLUGIN_NAME, err));
+                }
+            }
+            // let data:string = resultArray.join('\n') // this is more correct, avoiding a trailing newline on last line, but it doesn't match isStream()
+            let data = resultArray.join("");
+            resolve(data);
+        });
+    });
+}
+exports.csvParseText = csvParseText;
 /** creates an object from an array, using as its keys a number representing the position in the original array */
 function arrayToObject(arr) {
     let newObj = {};
@@ -22,8 +97,10 @@ function arrayToObject(arr) {
 /** wrap incoming recordObject in a Singer RECORD Message object*/
 function createRecord(recordObject, streamName) {
     let rec = recordObject;
+    // if configObj.columns is falsey data is returned as an array, but the Singer Spec requires a "JSON map" (i.e. an object), so
+    // we convert an array to an object to comply with the spec
     if (Array.isArray(recordObject)) {
-        // Singer Spec requires a "JSON map" (i.e. an object), so we convert an array to an object to comply with the spec
+        //
         rec = arrayToObject(recordObject);
     }
     return { type: "RECORD", stream: streamName, record: rec };
@@ -62,41 +139,6 @@ function tapCsv(origConfigObj) {
         catch (err) {
             console.error(err);
         }
-        // post-process line object
-        const handleLine = (lineObj, _streamName) => {
-            if (parser.options.raw || parser.options.info) {
-                let newObj = createRecord(lineObj.record, _streamName);
-                if (lineObj.raw)
-                    newObj.raw = lineObj.raw;
-                if (lineObj.info)
-                    newObj.info = lineObj.info;
-                lineObj = newObj;
-            }
-            else {
-                lineObj = createRecord(lineObj, _streamName);
-            }
-            return lineObj;
-        };
-        function newTransformer(streamName) {
-            let transformer = through2.obj(); // new transform stream, in object mode
-            // transformer is designed to follow csv-parse, which emits objects, so dataObj is an Object. We will finish by converting dataObj to a text line
-            transformer._transform = function (dataObj, encoding, callback) {
-                let returnErr = null;
-                try {
-                    let handledObj = handleLine(dataObj, streamName);
-                    if (handledObj) {
-                        let handledLine = JSON.stringify(handledObj);
-                        log.debug(handledLine);
-                        this.push(handledLine + '\n');
-                    }
-                }
-                catch (err) {
-                    returnErr = new PluginError(PLUGIN_NAME, err);
-                }
-                callback(returnErr);
-            };
-            return transformer;
-        }
         // set the stream name to the file name (without extension)
         let streamName = file.stem;
         if (file.isNull()) {
@@ -104,27 +146,14 @@ function tapCsv(origConfigObj) {
             return cb(returnErr, file);
         }
         else if (file.isBuffer()) {
-            (0, csv_parse_1.parse)(file.contents, configObj, function (err, linesArray) {
-                // this callback function runs when the parser finishes its work, returning an array parsed lines 
-                let tempLine;
-                let resultArray = [];
-                // we'll call handleLine on each line
-                for (let dataIdx in linesArray) {
-                    try {
-                        let lineObj = linesArray[dataIdx];
-                        tempLine = handleLine(lineObj, streamName);
-                        if (tempLine) {
-                            let tempStr = JSON.stringify(tempLine);
-                            log.debug(tempStr);
-                            resultArray.push(tempStr);
-                        }
-                    }
-                    catch (err) {
-                        returnErr = new PluginError(PLUGIN_NAME, err);
-                    }
-                }
-                let data = resultArray.join('\n');
+            csvParseText(file.contents, streamName, configObj)
+                .then((data) => {
                 file.contents = Buffer.from(data);
+            })
+                .catch((err) => {
+                returnErr = new PluginError(PLUGIN_NAME, err);
+            })
+                .finally(() => {
                 // we are done with file processing. Pass the processed file along
                 log.debug('calling callback');
                 cb(returnErr, file);
@@ -140,14 +169,19 @@ function tapCsv(origConfigObj) {
                 // log.debug('calling callback')    
                 log.debug('csv parser is done');
             })
-                // .on('data', function (data:any, err: any) {
-                //   log.debug(data)
-                // })
+                .on('data', function (data, err) {
+                log.debug(data);
+            })
                 .on('error', function (err) {
                 log.error(err);
                 self.emit('error', new PluginError(PLUGIN_NAME, err));
             })
-                .pipe(newTransformer(streamName));
+                // .pipe(transform(convertCsvObjectToRecordLine)) // wont work; options object is REQUIRED--stream will fail with odd behaviors...
+                .pipe((0, stream_transform_1.transform)({ params: { streamName, configObj } }, convertCsvObjectToRecordLine))
+                .on('error', function (err) {
+                log.error(err);
+                self.emit('error', new PluginError(PLUGIN_NAME, err));
+            });
             // after our stream is set up (not necesarily finished) we call the callback
             log.debug('calling callback');
             cb(returnErr, file);
