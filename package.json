@@ -28,7 +28,7 @@
       "gulpetl-tap-csv": "gulpetl-tap-csv.js"
     }
   },
-  "homepage": "https://gulpetl.com",
+  "homepage": "http://docs.gulpetl.com",
   "dependencies": {
     "csv-parse": "^5.5.2",
     "from2": "^2.3.0",
