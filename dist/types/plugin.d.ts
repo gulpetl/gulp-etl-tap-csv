@@ -12,8 +12,9 @@ interface ConvertParams {
  */
 export declare function convertCsvObjectToRecordLine(dataObj: Object, params?: ConvertParams | any): string | null;
 /**
- * Converts an [ndjson](https://ndjson.org/) input into an array of objects and passes the array to csvStringify for conversion to CSV
- * @param ndjsonLines May be a string or Buffer representing ndjson lines, or an array of json strings or an array of objects
+ * Converts a string/buffer CSV input into an a Message Stream
+ * @param csvLines A string or Buffer representing CSV lines
+ * @param streamName name to use for the "stream" property of each Message Stream record
  * @param configObj [CSV Stringify options object](https://csv.js.org/stringify/options/); optional
  * @returns A string representation of the CSV lines
  */

@@ -23,6 +23,7 @@ If its `columns` option is *false* `csv-parse` returns arrays for each row inste
 ### Sample gulpfile.js
 
 ``` javascript
+
 /* parse all .CSV files in a folder into Message Stream files in a different folder */
 
 let gulp = require('gulp')
@@ -32,9 +33,9 @@ var tapCsv = require('gulp-etl-tap-csv').tapCsv
 exports.default = function() {
     return gulp.src('data/*.csv')
     .pipe(tapCsv({ columns:true }))
-    .pipe(rename({ extname: ".ndjson" })) // rename to *.ndjson
     .pipe(gulp.dest('output/'));
 }
+
 ```
 
 ### gulp-data
@@ -44,10 +45,8 @@ allows data/options from the pipeline to be used to create options passed to thi
 See the demonstration in `debug/gulpfile.ts` for usage examples.
 
 ### Node-RED ###
-[Node-RED](https://nodered.org/) is a low-code, visual programming environment for event-driven applications. We're experimenting with it, and this plugin is now available as a Node-RED node. Since we're still in test mode, we aren't yet available in Node-RED's Palette; add to Node-RED by going to your user folder and typing:
-```
-npm install gulp-etl-tap-csv
-```
+[Node-RED](https://nodered.org/) is a low-code, visual programming environment for event-driven applications. Install this node under Manage Palette, look for `gulp-etl-tap-csv`
+
 #### Demo flow ####
 
 ![Demo flow](./resources/demoflow.png)
@@ -90,17 +89,20 @@ And when it finishes, the data should be back in CSV format again!
 Copy the demo flow for import in Node-RED under `Import`:
 
 ``` json
-[{"id":"bd15ad43f5227ed0","type":"file in","z":"cd67672e19ab739a","name":"","filename":"./testdata/cars.csv","filenameType":"str","format":"utf8","chunk":false,
-"sendError":false,"encoding":"none","allProps":false,"x":330,"y":380,"wires":[["57240500756eadd1","bd4928a1fe33a509"]]},{"id":"5a22ef69893bbc79","type":"inject",
-"z":"cd67672e19ab739a","name":"click to start","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,
-"topic":"","payload":"","payloadType":"date","x":130,"y":340,"wires":[["bd15ad43f5227ed0"]]},{"id":"7e1608b8b0ea106d","type":"gulpetl-target-csv",
-"z":"cd67672e19ab739a","name":"","x":330,"y":540,"wires":[["bd4928a1fe33a509"]]},{"id":"16687292eb745dab","type":"template","z":"cd67672e19ab739a","name":"Set 
-config","field":"config","fieldType":"msg","format":"json","syntax":"plain","template":"{\n    \"quoted\":false,\n    \"header\":true\n}","output":"json","x":120,
-"y":540,"wires":[["7e1608b8b0ea106d"]]},{"id":"5e5268849aacb118","type":"gulpetl-tap-csv","z":"cd67672e19ab739a","name":"","x":320,"y":460,"wires":
-[["16687292eb745dab","bd4928a1fe33a509"]]},{"id":"57240500756eadd1","type":"template","z":"cd67672e19ab739a","name":"Set config","field":"config",
-"fieldType":"msg","format":"json","syntax":"plain","template":"{\n    \"columns\":true\n}","output":"json","x":120,"y":460,"wires":[["5e5268849aacb118"]]},
-{"id":"bd4928a1fe33a509","type":"debug","z":"cd67672e19ab739a","name":"debug (msg object)","active":true,"tosidebar":true,"console":false,"tostatus":false,
-"complete":"true","targetType":"full","statusVal":"","statusType":"auto","x":570,"y":440,"wires":[]}]
+[{"id":"bd15ad43f5227ed0","type":"file in","z":"cd67672e19ab739a","name":"","filename":"./testdata/cars.csv","filenameType":"str","format":"utf8","chunk":false,"sendError":false,"encoding":"none","allProps":false,"x":330,"y"
+:380,"wires":[["57240500756eadd1","bd4928a1fe33a509"]]},{"id":"5a22ef69893bbc79","type":"inject","z":"cd67672e19ab739a"
+,"name":"click to start","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false
+,"onceDelay":0.1,"topic":"","payload":"","payloadType":"date","x":130,"y":340,"wires":[["bd15ad43f5227ed0"]]},{"id"
+:"7e1608b8b0ea106d","type":"gulpetl-target-csv","z":"cd67672e19ab739a","name":"","x":330,"y":540,"wires"
+:[["bd4928a1fe33a509"]]},{"id":"16687292eb745dab","type":"template","z":"cd67672e19ab739a","name":"Set config","field"
+:"config","fieldType":"msg","format":"json","syntax":"plain","template":"{\n    \"quoted\":false,\n    \"header\":true\n}",
+"output":"json","x":120,"y":540,"wires":[["7e1608b8b0ea106d"]]},{"id":"5e5268849aacb118","type":"gulpetl-tap-csv","z"
+:"cd67672e19ab739a","name":"","x":320,"y":460,"wires":[["16687292eb745dab","bd4928a1fe33a509"]]},{"id"
+:"57240500756eadd1","type":"template","z":"cd67672e19ab739a","name":"Set config","field":"config","fieldType":"msg"
+,"format":"json","syntax":"plain","template":"{\n    \"columns\":true\n}","output":"json","x":120,"y":460,"wires"
+:[["5e5268849aacb118"]]},{"id":"bd4928a1fe33a509","type":"debug","z":"cd67672e19ab739a","name":"debug (msg object)"
+,"active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","statusVal":""
+,"statusType":"auto","x":570,"y":440,"wires":[]}]
 ```
 
 ### Quick Start for Coding on This Plugin

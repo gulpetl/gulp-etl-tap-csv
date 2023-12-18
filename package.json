@@ -21,14 +21,17 @@
     "gulpplugin",
     "csv",
     "gulp-etl",
-    "data"
+    "gulpetl",
+    "etl",
+    "data",
+    "node-red"
   ],
   "node-red": {
     "nodes": {
       "gulpetl-tap-csv": "gulpetl-tap-csv.js"
     }
   },
-  "homepage": "http://docs.gulpetl.com",
+  "homepage": "https://gulpetl.com",
   "dependencies": {
     "csv-parse": "^5.5.2",
     "from2": "^2.3.0",

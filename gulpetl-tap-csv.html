@@ -9,14 +9,15 @@
         },
         inputs: 1,
         outputs: 1,
-        icon: "file.svg",
+        // icon: "file.svg",        
+        icon: "font-awesome/fa-file-text-o",
         label: function() {
             return this.name||"gulpetl-tap-csv";
         },
         paletteLabel: function() {
-            return this.name||"tap-csv";
-        },
-
+            // use small non-breaking dash character for visual presentation-- avoids the breaks node-red inserts around regular dashes in the palette - https://www.compart.com/en/unicode/category/Pd
+            return "tap-csv".replace("-","\u2011");
+        }
     });
 </script>
 
@@ -28,7 +29,7 @@
 </script>
 
 <script type="text/html" data-help-name="gulpetl-tap-csv">
-    <p>Converts a gulp-etl Message Stream to CSV lines
+    <p>Converts CSV lines to a gulp-etl Message Stream
         <br>
         <br><b>Input</b>: CSV lines (as a string, delimited by CR, LF, or CRLF)
         <br><b>Output</b>: NDJSON lines (as a newline-delimited string)
