@@ -1,13 +1,26 @@
 // const tapCsv = require('./src/plugin'); // Error: Cannot find module './src/plugin'
 // import { csvStringifyNdjson } from 'gulp-etl-tap-csv'; // SyntaxError: Cannot use import statement outside a module (line:2)
 const tapCsv = require('gulp-etl-tap-csv');
+const extractConfig = require('@gulpetl/node-red-core').extractConfig;
 
 module.exports = function (RED) {
   function TapCsvNode(config) {
     RED.nodes.createNode(this, config);
+    this.config = config.config;
+
     var node = this;
-    node.on('input', function (msg) {
-      let configObj = tapCsv.extractConfig(null/*local.config*/, msg.config);
+    node.on('input', function (msg, send, done) {
+      let configObj;
+      try {
+        if (this.config.trim())
+          configObj = JSON.parse(this.config);
+      }
+      catch (err) {
+        done(`Unable to parse ${tapCsv.PLUGIN_NAME}.config: ` + err);
+        return;
+      }
+
+      configObj = extractConfig(configObj, msg?.config, tapCsv.PLUGIN_NAME, tapCsv.localDefaultConfigObj);
 
       if (!msg.topic?.startsWith("gulp")) {
         let fileNameStem = msg?.filename.split(/[\\/]/).pop().split('.')[0];

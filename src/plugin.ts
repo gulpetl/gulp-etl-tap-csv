@@ -2,15 +2,18 @@ const through2 = require('through2')
 import Vinyl = require('vinyl')
 import PluginError = require('plugin-error');
 const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
-const PLUGIN_NAME = module.exports.name;
+export const PLUGIN_NAME = module.exports.name;
 import { getLogger, LogLevelDesc } from 'loglevel'
 const log = getLogger(PLUGIN_NAME) // get a logger instance based on the project name
 log.setLevel((process.env.DEBUG_LEVEL || 'warn') as LogLevelDesc)
 import replaceExt = require('replace-ext');
-import merge from 'merge';
 
 import { parse } from 'csv-parse';
 import { transform } from 'stream-transform';
+import { extractConfig } from '@gulpetl/node-red-core';
+import { config } from 'process';
+
+export let localDefaultConfigObj: any = { columns: false, asdf:"fdsa" }; // default to auto-discover column names from first line
 
 interface ConvertParams {
   streamName: string;
@@ -24,7 +27,7 @@ interface ConvertParams {
  * NOTE: params is REQUIRED; if no params is passed when run as a Handler, the whole stream will fail quietly.
  * @returns A [RECORD Message](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#record-message) created from dataObj, as a string
  */
-export function convertCsvObjectToRecordLine(dataObj: Object, params?:ConvertParams|any): string | null {
+export function convertCsvObjectToRecordLine(dataObj: Object, params?: ConvertParams | any): string | null {
 
   // post-process line object
   const handleLine = (lineObj: any, _streamName: string): object | null => {
@@ -74,7 +77,7 @@ export function csvParseText(csvLines: string | Buffer, streamName: string, conf
       // we'll call handleLine on each line
       for (let dataIdx in linesArray) {
         try {
-          let tempLine = convertCsvObjectToRecordLine(linesArray[dataIdx],{streamName, configObj});
+          let tempLine = convertCsvObjectToRecordLine(linesArray[dataIdx], { streamName, configObj });
           if (tempLine) {
             resultArray.push(tempLine);
           }
@@ -88,33 +91,6 @@ export function csvParseText(csvLines: string | Buffer, streamName: string, conf
       resolve(data);
     })
   })
-}
-
-let localDefaultConfigObj: any = {columns:true};
-/**
- * Merges config information for this plugin from all potential sources
- * @param specificConfigObj A configObj set specifically for this plugin
- * @param pipelineConfigObj A "super" configObj (e.g. file.data or msg.config) for the whole pipeline which may/may not apply to this plugin; if it
- * does, its parameters override any matching ones from specificConfigObj.
- * @param defaultConfigObj A default configObj, whose parameters are overridden by all others
- */
-export function extractConfig(specificConfigObj:any, pipelineConfigObj?:any, defaultConfigObj:any = localDefaultConfigObj) : any {
-  let configObj: any;
-  try {
-    if (pipelineConfigObj) {
-      // look for a property based on our plugin's name; assumes a complex object meant for multiple plugins
-      let dataObj = pipelineConfigObj[PLUGIN_NAME];
-      // if we didn't find a config above, use the entire file.data object as our config
-      if (!dataObj) dataObj = pipelineConfigObj;
-      // merge superConfigObj config into our passed-in origConfigObj
-      // merge.recursive(origConfigObj, dataObj); // <-- huge bug: can't mess with origConfigObj, because changes there will bleed into subsequent calls
-      configObj = merge.recursive(true, defaultConfigObj, specificConfigObj, dataObj, );
-    }
-    else
-      configObj = merge.recursive(true, defaultConfigObj, specificConfigObj);
-  }
-  catch { }
-  return configObj;
 }
 
 /** creates an object from an array, using as its keys a number representing the position in the original array */
@@ -149,8 +125,7 @@ export function tapCsv(origConfigObj: any) {
   // see https://stackoverflow.com/a/52432089/5578474 for a note on the "this" param
   const strm = through2.obj(function (this: any, file: Vinyl, encoding: string, cb: Function) {
 
-    let configObj:any = extractConfig(origConfigObj, file.data);
-
+    let configObj: any = extractConfig(undefined, file.data, PLUGIN_NAME, origConfigObj, localDefaultConfigObj);
     const self = this
     let returnErr: any = null
     const parser = parse(configObj)
@@ -204,7 +179,7 @@ export function tapCsv(origConfigObj: any) {
           self.emit('error', new PluginError(PLUGIN_NAME, err));
         })
         // .pipe(transform(convertCsvObjectToRecordLine)) // wont work; options object is REQUIRED--stream will fail with odd behaviors...
-        .pipe(transform({params:{streamName, configObj}},convertCsvObjectToRecordLine))
+        .pipe(transform({ params: { streamName, configObj } }, convertCsvObjectToRecordLine))
         .on('error', function (err: any) {
           log.error(err)
           self.emit('error', new PluginError(PLUGIN_NAME, err));
