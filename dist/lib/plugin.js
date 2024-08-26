@@ -12,7 +12,7 @@ const replaceExt = require("replace-ext");
 const csv_parse_1 = require("csv-parse");
 const stream_transform_1 = require("stream-transform");
 const node_red_core_1 = require("@gulpetl/node-red-core");
-exports.localDefaultConfigObj = { columns: true }; // default to auto-discover column names from first line
+exports.localDefaultConfigObj = { columns: false, asdf: "fdsa" }; // default to auto-discover column names from first line
 /**
  * Convert a standard object into an NDJSON line; suitable for calling directly or as a Handler for [stream-transform](https://csv.js.org/transform/handler/)
  * @param dataObj An object (from csvParse) representing a line
@@ -114,7 +114,7 @@ function tapCsv(origConfigObj) {
     // creating a stream through which each file will pass - a new instance will be created and invoked for each file 
     // see https://stackoverflow.com/a/52432089/5578474 for a note on the "this" param
     const strm = through2.obj(function (file, encoding, cb) {
-        let configObj = (0, node_red_core_1.extractConfig)(origConfigObj, file.data, exports.PLUGIN_NAME, exports.localDefaultConfigObj);
+        let configObj = (0, node_red_core_1.extractConfig)(undefined, file.data, exports.PLUGIN_NAME, origConfigObj, exports.localDefaultConfigObj);
         const self = this;
         let returnErr = null;
         const parser = (0, csv_parse_1.parse)(configObj);
