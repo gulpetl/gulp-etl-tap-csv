@@ -1,0 +1,5 @@
+{"type":"RECORD","stream":"cars","record":{"0":"carModel","1":"price","2":"color"},"raw":"carModel,price,color\n"}
+{"type":"RECORD","stream":"cars","record":{"0":"Audi","1":"10000","2":"blue"},"raw":"\"Audi\",10000,\"blue\"\n"}
+{"type":"RECORD","stream":"cars","record":{"0":"BMW","1":"15000","2":"red"},"raw":"\"BMW\",15000,\"red\"\n"}
+{"type":"RECORD","stream":"cars","record":{"0":"Mercedes","1":"20000","2":"yellow"},"raw":"\"Mercedes\",20000,\"yellow\"\n"}
+{"type":"RECORD","stream":"cars","record":{"0":"Porsche","1":"30000","2":"green"},"raw":"\"Porsche\",30000,\"green\""}
