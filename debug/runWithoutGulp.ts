@@ -3,7 +3,7 @@ import { parse } from 'csv-parse';
 import { transform } from 'stream-transform';
 
 /**
- * Run this plugin on a .csv file, converting it to an .ndjson file. As a wrapper for csv-parse, the main logic
+ * Run this plugin on a .csv file, converting it to a .jsonl file. As a wrapper for csv-parse, the main logic
  * in this plugin is in `convertCsvObjectToRecordLine`, which stringifies incoming object lines into RECORD Message
  * strings.
  * 

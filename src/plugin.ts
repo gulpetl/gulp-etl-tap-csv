@@ -21,7 +21,7 @@ interface ConvertParams {
 }
 
 /**
- * Convert a standard object into an NDJSON line; suitable for calling directly or as a Handler for [stream-transform](https://csv.js.org/transform/handler/)
+ * Convert a standard object into an JSONL line; suitable for calling directly or as a Handler for [stream-transform](https://csv.js.org/transform/handler/)
  * @param dataObj An object (from csvParse) representing a line
  * @param params A `params` object; may be passed in directly, or, when calling as a stream-transform handler it is passed as `options.params` .
  * NOTE: params is REQUIRED; if no params is passed when run as a Handler, the whole stream will fail quietly.
@@ -132,7 +132,7 @@ export function tapCsv(origConfigObj: any) {
 
 
     try {
-      file.path = replaceExt(file.path, '.ndjson')
+      file.path = replaceExt(file.path, '.jsonl')
     }
     catch (err: any) {
       console.error(err);

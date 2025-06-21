@@ -2,9 +2,9 @@
 
 This plugin  converts CSV files to **gulp-etl** **Message Stream** files; originally adapted from the [gulp-etl-handlelines](https://github.com/gulpetl/gulp-etl-handlelines) model plugin. It is a **gulp-etl** wrapper for [csv-parse](https://csv.js.org/parse/).
 
-This is a **[gulp-etl](http://gulpetl.com/)** plugin, and as such it is a [gulp](https://gulpjs.com/) plugin. **gulp-etl** plugins work with [ndjson](http://ndjson.org/) data streams/files which we call **Message Streams** and which are compliant with the [Singer specification](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#output). In the **gulp-etl** ecosystem, **taps** tap into an outside format or system (in this case, a CSV file) and convert their contents/output to a Message Stream, and **targets** convert/output Message Streams to an outside format or system. In this way, these modules can be stacked to convert from one format or system to another, either directly or with tranformations or other parsing in between. Message Streams look like this:
+This is a **[gulp-etl](http://gulpetl.com/)** plugin, and as such it is a [gulp](https://gulpjs.com/) plugin. **gulp-etl** plugins work with [jsonl](http://jsonlines.org/) data streams/files which we call **Message Streams** and which are compliant with the [Singer specification](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md#output). In the **gulp-etl** ecosystem, **taps** tap into an outside format or system (in this case, a CSV file) and convert their contents/output to a Message Stream, and **targets** convert/output Message Streams to an outside format or system. In this way, these modules can be stacked to convert from one format or system to another, either directly or with tranformations or other parsing in between. Message Streams look like this:
 
-``` ndjson
+``` jsonl
 {"type": "SCHEMA", "stream": "users", "key_properties": ["id"], "schema": {"required": ["id"], "type": "object", "properties": {"id": {"type": "integer"}}}}
 {"type": "RECORD", "stream": "users", "record": {"id": 1, "name": "Chris"}}
 {"type": "RECORD", "stream": "users", "record": {"id": 2, "name": "Mike"}}
@@ -75,7 +75,7 @@ The config is also set in a Template node. Identical to the `configObj` above, i
 
 When we run, we'll watch the Debug console; we can see the data parsed into as Message Stream. This intermediate format is used by all gulp-etl plugins/nodes, and allows for smooth interactions between them all.
 
-``` ndjson
+``` jsonl
 {"type":"RECORD","stream":"cars","record":{"carModel":"Audi","price":"10000","color":"blue"}}
 {"type":"RECORD","stream":"cars","record":{"carModel":"BMW","price":"15000","color":"red"}}
 {"type":"RECORD","stream":"cars","record":{"carModel":"Mercedes","price":"20000","color":"yellow"}}

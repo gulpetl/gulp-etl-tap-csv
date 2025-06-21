@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tapCsv = exports.csvParseText = exports.convertCsvObjectToRecordLine = exports.localDefaultConfigObj = exports.PLUGIN_NAME = void 0;
+exports.localDefaultConfigObj = exports.PLUGIN_NAME = void 0;
+exports.convertCsvObjectToRecordLine = convertCsvObjectToRecordLine;
+exports.csvParseText = csvParseText;
+exports.tapCsv = tapCsv;
 const through2 = require('through2');
 const PluginError = require("plugin-error");
 const pkginfo = require('pkginfo')(module); // project package.json info into module.exports
@@ -14,7 +17,7 @@ const stream_transform_1 = require("stream-transform");
 const node_red_core_1 = require("@gulpetl/node-red-core");
 exports.localDefaultConfigObj = { columns: false, asdf: "fdsa" }; // default to auto-discover column names from first line
 /**
- * Convert a standard object into an NDJSON line; suitable for calling directly or as a Handler for [stream-transform](https://csv.js.org/transform/handler/)
+ * Convert a standard object into an JSONL line; suitable for calling directly or as a Handler for [stream-transform](https://csv.js.org/transform/handler/)
  * @param dataObj An object (from csvParse) representing a line
  * @param params A `params` object; may be passed in directly, or, when calling as a stream-transform handler it is passed as `options.params` .
  * NOTE: params is REQUIRED; if no params is passed when run as a Handler, the whole stream will fail quietly.
@@ -51,7 +54,6 @@ function convertCsvObjectToRecordLine(dataObj, params) {
     }
     return null;
 }
-exports.convertCsvObjectToRecordLine = convertCsvObjectToRecordLine;
 /**
  * Converts a string/buffer CSV input into an a Message Stream
  * @param csvLines A string or Buffer representing CSV lines
@@ -87,7 +89,6 @@ function csvParseText(csvLines, streamName, configObj = {}) {
         });
     });
 }
-exports.csvParseText = csvParseText;
 /** creates an object from an array, using as its keys a number representing the position in the original array */
 function arrayToObject(arr) {
     let newObj = {};
@@ -119,7 +120,7 @@ function tapCsv(origConfigObj) {
         let returnErr = null;
         const parser = (0, csv_parse_1.parse)(configObj);
         try {
-            file.path = replaceExt(file.path, '.ndjson');
+            file.path = replaceExt(file.path, '.jsonl');
         }
         catch (err) {
             console.error(err);
@@ -174,5 +175,4 @@ function tapCsv(origConfigObj) {
     });
     return strm;
 }
-exports.tapCsv = tapCsv;
 //# sourceMappingURL=plugin.js.map
